@@ -1,0 +1,104 @@
+{
+    "identifier": "deploy_wordpress_app",
+    "title": "Deploy WordPress App",
+    "icon": "AppRunner",
+    "description": "Deploy a WordPress app with Akeyless integration using ArgoCD",
+    "trigger": {
+      "type": "self-service",
+      "operation": "CREATE",
+      "userInputs": {
+        "properties": {
+          "app_name": {
+            "icon": "WordPress",
+            "type": "string",
+            "title": "App Name"
+          },
+          "namespace": {
+            "icon": "Kubernetes",
+            "type": "string",
+            "title": "Kubernetes Namespace",
+            "default": "default"
+          },
+          "db_name": {
+            "icon": "Database",
+            "type": "string",
+            "title": "Database Name"
+          },
+          "repo_name": {
+            "icon": "Github",
+            "type": "string",
+            "title": "New Repository Name"
+          },
+          "akeyless_mysql_secret_name": {
+            "icon": "Lock",
+            "type": "string",
+            "title": "Akeyless MySQL Secret Name",
+            "default": "mysql-wp-producer"
+          }
+        },
+        "required": [
+          "app_name",
+          "namespace",
+          "db_name",
+          "repo_name",
+          "akeyless_mysql_secret_name"
+        ],
+        "order": [
+          "app_name",
+          "repo_name",
+          "namespace",
+          "db_name",
+          "akeyless_mysql_secret_name"
+        ]
+      },
+      "blueprintIdentifier": "service"
+    },
+    "invocationMethod": {
+      "type": "GITHUB",
+      "org": "samgabrail",
+      "repo": "akeyless-platform-engineering-port",
+      "workflow": "deploy-wordpress.yml",
+      "workflowInputs": {
+        "app_name": "{{.inputs.app_name}}",
+        "namespace": "{{.inputs.namespace}}",
+        "db_name": "{{.inputs.db_name}}",
+        "akeyless_secret_name": "{{.inputs.akeyless_secret_name}}",
+        "repo_name": "{{.inputs.repo_name}}",
+        "port_payload": {
+          "resourceType": "run",
+          "status": "TRIGGERED",
+          "trigger": "{{ .trigger | {by, origin, at} }}",
+          "context": {
+            "entity": "{{.entity.identifier}}",
+            "blueprint": "{{.action.blueprint}}",
+            "runId": "{{.run.id}}"
+          },
+          "payload": {
+            "entity": "{{ (if .entity == {} then null else .entity end) }}",
+            "action": {
+              "invocationMethod": {
+                "type": "GITHUB",
+                "org": "samgabrail",
+                "repo": "akeyless-platform-engineering-port",
+                "workflow": "deploy-wordpress.yml",
+                "omitUserInputs": false,
+                "omitPayload": false,
+                "reportWorkflowStatus": true
+              },
+              "trigger": "{{.trigger.operation}}"
+            },
+            "properties": {
+              "app_name": "{{.inputs.app_name}}",
+              "namespace": "{{.inputs.namespace}}",
+              "db_name": "{{.inputs.db_name}}",
+              "akeyless_secret_name": "{{.inputs.akeyless_secret_name}}",
+              "repo_name": "{{.inputs.repo_name}}"
+            }
+          }
+        }
+      },
+      "reportWorkflowStatus": true
+    },
+    "requiredApproval": false,
+    "publish": true
+  }

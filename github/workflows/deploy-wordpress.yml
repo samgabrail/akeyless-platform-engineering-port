@@ -1,0 +1,142 @@
+name: Deploy WordPress with ArgoCD and Akeyless
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
+      db_name:
+        required: true
+        type: string
+      akeyless_mysql_secret_name:
+        required: true
+        type: string
+      repo_name:
+        required: true
+        type: string
+      port_payload:
+        required: true
+        type: string
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+  ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+  AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
+  AKEYLESS_ACCESS_TYPE: ${{ secrets.AKEYLESS_ACCESS_TYPE }}
+  AKEYLESS_ACCESS_TYPE_PARAM: ${{ secrets.AKEYLESS_ACCESS_TYPE_PARAM }}
+
+jobs:
+  deploy-wordpress:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Akeyless CLI
+        run: |
+          curl -o akeyless https://github.com/akeylesslabs/akeyless-cli/releases/latest/download/akeyless-cli-linux
+          chmod +x akeyless
+          sudo mv akeyless /usr/local/bin/
+
+      - name: Create new repository
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.repos.createInOrg({
+              org: context.repo.owner,
+              name: '${{ github.event.inputs.repo_name }}',
+              private: true
+            })
+
+      - name: Prepare and push manifests
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git
+          cd ${{ github.event.inputs.repo_name }}
+          
+          # Copy and modify manifest files
+          cp -r ../k8s-manifests/* .
+          sed -i 's/{{APP_NAME}}/${{ github.event.inputs.app_name }}/g' *.yaml
+          sed -i 's/{{NAMESPACE}}/${{ github.event.inputs.namespace }}/g' *.yaml
+          sed -i 's/{{DB_NAME}}/${{ github.event.inputs.db_name }}/g' *.yaml
+          sed -i 's/{{AKEYLESS_MYSQL_SECRET_NAME}}/${{ github.event.inputs.akeyless_mysql_secret_name }}/g' *.yaml
+          
+          git add .
+          git commit -m "Add WordPress and MySQL manifests with Akeyless integration"
+          git push
+
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x argocd
+          sudo mv argocd /usr/local/bin/
+
+      - name: Create ArgoCD Application
+        run: |
+          argocd app create ${{ github.event.inputs.app_name }} \
+            --repo https://github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git \
+            --path . \
+            --dest-server https://kubernetes.default.svc \
+            --dest-namespace ${{ github.event.inputs.namespace }} \
+            --sync-policy automated \
+            --server ${{ env.ARGOCD_SERVER }} \
+            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
+
+      - name: Wait for initial deployment
+        run: |
+          argocd app wait ${{ github.event.inputs.app_name }} --timeout 300 \
+            --server ${{ env.ARGOCD_SERVER }} \
+            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
+
+      - name: Configure Akeyless Dynamic Secret
+        run: |
+          akeyless configure --access-id "$AKEYLESS_ACCESS_ID" --access-type "$AKEYLESS_ACCESS_TYPE" --access-type-param "$AKEYLESS_ACCESS_TYPE_PARAM"
+          akeyless create-dynamic-secret \
+            --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic" \
+            --producer-type mysql \
+            --mysql-host "mysql-${{ github.event.inputs.app_name }}.${{ github.event.inputs.namespace }}.svc.cluster.local" \
+            --mysql-port 3306 \
+            --mysql-username "root" \
+            --mysql-password "{{ .Secrets.${{ github.event.inputs.akeyless_mysql_secret_name }}.password }}" \
+            --db-name "${{ github.event.inputs.db_name }}"
+
+      - name: Update WordPress deployment for dynamic secret
+        run: |
+          cd ${{ github.event.inputs.repo_name }}
+          sed -i 's/{{AKEYLESS_MYSQL_SECRET_NAME}}/${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic/g' wordpress-deployment.yaml
+          git add wordpress-deployment.yaml
+          git commit -m "Update WordPress deployment to use dynamic secret"
+          git push
+
+      - name: Trigger ArgoCD sync
+        run: |
+          argocd app sync ${{ github.event.inputs.app_name }} \
+            --server ${{ env.ARGOCD_SERVER }} \
+            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
+
+      - name: Update Port
+        uses: port-labs/port-github-action@v1
+        with:
+          identifier: ${{ github.event.inputs.app_name }}
+          title: ${{ github.event.inputs.app_name }}
+          blueprint: service
+          properties: |
+            {
+              "name": "${{ github.event.inputs.app_name }}",
+              "namespace": "${{ github.event.inputs.namespace }}",
+              "database": "${{ github.event.inputs.db_name }}",
+              "akeylessMysqlSecret": "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic",
+              "repository": "${{ github.event.inputs.repo_name }}"
+            }
+          relations: {}
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}

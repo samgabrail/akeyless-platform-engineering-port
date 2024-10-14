@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-{{APP_NAME}}
+  namespace: {{NAMESPACE}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-{{APP_NAME}}
+  template:
+    metadata:
+      labels:
+        app: mysql-{{APP_NAME}}
+      annotations:
+        akeyless.io/inject-secrets: "true"
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "{{ .Secrets.{{AKEYLESS_MYSQL_SECRET_NAME}}.password }}"
+        - name: MYSQL_DATABASE
+          value: {{DB_NAME}}

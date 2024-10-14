@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-{{APP_NAME}}
+  namespace: {{NAMESPACE}}
+spec:
+  selector:
+    app: mysql-{{APP_NAME}}
+  ports:
+  - port: 3306
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{APP_NAME}}
+  namespace: {{NAMESPACE}}
+spec:
+  selector:
+    app: {{APP_NAME}}
+  ports:
+  - port: 80
+    targetPort: 80
