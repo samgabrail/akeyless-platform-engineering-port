@@ -32,6 +32,7 @@ env:
   ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
   AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
   AKEYLESS_ACCESS_SECRET: ${{ secrets.AKEYLESS_ACCESS_SECRET }}
+  PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
 jobs:
   deploy-wordpress:
@@ -49,6 +50,7 @@ jobs:
       - name: Create new repository
         uses: actions/github-script@v6
         with:
+          github-token: ${{ env.PERSONAL_ACCESS_TOKEN }}
           script: |
             await github.rest.repos.createForAuthenticatedUser({
               name: '${{ github.event.inputs.repo_name }}',
@@ -57,9 +59,9 @@ jobs:
 
       - name: Prepare and push manifests
         run: |
-          git config --global user.email "inf@tekanaid.com"
+          git config --global user.email "info@tekanaid.com"
           git config --global user.name "TeKanAid Automation"
-          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git
+          git clone https://x-access-token:${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git
           cd ${{ github.event.inputs.repo_name }}
           
           # Copy and modify manifest files
