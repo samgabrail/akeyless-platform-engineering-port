@@ -138,19 +138,20 @@ jobs:
 
       - name: Create Akeyless Target
         run: |
-          akeyless target create db \
+          output=$(akeyless target create db \
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
             --db-type mysql \
             --pwd "$MYSQL_ROOT_PASSWORD" \
             --host "mysql-${{ github.event.inputs.app_name }}.${{ github.event.inputs.namespace }}.svc.cluster.local" \
             --port 3306 \
             --user-name "root" \
-            --db-name "${{ github.event.inputs.db_name }}" || \
-          if [ $? -eq 1 ] && [ "$(echo $output | grep -c '409 Conflict')" -gt 0 ]; then
+            --db-name "${{ github.event.inputs.db_name }}" 2>&1)
+          exit_code=$?
+          if [ $exit_code -eq 1 ] && echo "$output" | grep -q '409 Conflict'; then
             echo "Target already exists. Continuing with the workflow."
             exit 0
-          else
-            echo "Failed to create target for an unexpected reason."
+          elif [ $exit_code -ne 0 ]; then
+            echo "Failed to create target: $output"
             exit 1
           fi
 
