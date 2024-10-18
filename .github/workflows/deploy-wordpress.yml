@@ -145,7 +145,14 @@ jobs:
             --host "mysql-${{ github.event.inputs.app_name }}.${{ github.event.inputs.namespace }}.svc.cluster.local" \
             --port 3306 \
             --user-name "root" \
-            --db-name "${{ github.event.inputs.db_name }}"
+            --db-name "${{ github.event.inputs.db_name }}" || \
+          if [ $? -eq 1 ] && [ "$(echo $output | grep -c '409 Conflict')" -gt 0 ]; then
+            echo "Target already exists. Continuing with the workflow."
+            exit 0
+          else
+            echo "Failed to create target for an unexpected reason."
+            exit 1
+          fi
 
       - name: Create Akeyless Dynamic Secret
         run: |
