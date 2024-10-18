@@ -32,7 +32,9 @@ env:
   AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
   AKEYLESS_ACCESS_SECRET: ${{ secrets.AKEYLESS_ACCESS_SECRET }}
   PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-  AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8000'  # Replace with your actual Gateway URL
+  AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8000'
+  AKEYLESS_GATEWAY_CERT: ${{ secrets.AKEYLESS_GATEWAY_CERT }}
+  AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: '/tmp/gateway_cert.pem'
 
 jobs:
   deploy-wordpress:
@@ -40,6 +42,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Download Akeyless Gateway certificate
+        run: |
+          echo "${{ secrets.AKEYLESS_GATEWAY_CERT }}" > /tmp/gateway_cert.pem
 
       - name: Install and verify Akeyless CLI
         run: |
