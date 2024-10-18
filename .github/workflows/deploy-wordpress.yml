@@ -47,13 +47,13 @@ jobs:
         run: |
           echo "${{ secrets.AKEYLESS_GATEWAY_CERT }}" > /tmp/gateway_cert.pem
 
-      - name: Install and verify Akeyless CLI
-        run: |
-          curl -o akeyless https://akeyless-cli.s3.us-east-2.amazonaws.com/cli/latest/production/cli-linux-amd64
-          sudo chmod +x akeyless
-          sudo mv akeyless /usr/local/bin
-          which akeyless
-          akeyless --init
+      # - name: Install and verify Akeyless CLI
+      #   run: |
+      #     curl -o akeyless https://akeyless-cli.s3.us-east-2.amazonaws.com/cli/latest/production/cli-linux-amd64
+      #     sudo chmod +x akeyless
+      #     sudo mv akeyless /usr/local/bin
+      #     which akeyless
+      #     akeyless --init
 
       - name: Setup Akeyless Gateway certificate
         run: |
