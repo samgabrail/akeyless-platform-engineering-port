@@ -75,6 +75,7 @@ jobs:
           ls -la
           echo $AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE
           SECRET_JSON=$(akeyless get-secret-value --name "${{ github.event.inputs.akeyless_mysql_secret_name }}")
+          echo $SECRET_JSON
           if ! MYSQL_ROOT_PASSWORD=$(echo "$SECRET_JSON" | jq -r .password); then
             echo "Failed to parse JSON, using raw secret value"
             MYSQL_ROOT_PASSWORD="$SECRET_JSON"
