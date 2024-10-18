@@ -188,3 +188,8 @@ jobs:
       #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
 
 
+
+      - name: Verify certificate content
+        run: |
+          cat gateway_cert.pem
+          echo "Certificate file size: $(wc -c < gateway_cert.pem) bytes"
