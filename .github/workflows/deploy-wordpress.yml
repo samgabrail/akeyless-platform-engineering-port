@@ -84,7 +84,7 @@ jobs:
         run: argocd login ${{ secrets.ARGOCD_SERVER }} --username ${{ secrets.ARGOCD_USER }} --password ${{ secrets.ARGOCD_PASS }} --grpc-web --insecure
     
       - name: Register Repository in Argo CD
-        run: argocd repo add ${{ github.event.inputs.repo_name }} --username samgabrail --password ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: argocd repo add https://github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git --username ${{ github.repository_owner }} --password ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Create ArgoCD Application
         run: |
