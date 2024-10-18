@@ -29,7 +29,6 @@ on:
 
 env:
   ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
-  ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
   AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
   AKEYLESS_ACCESS_SECRET: ${{ secrets.AKEYLESS_ACCESS_SECRET }}
   PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
@@ -43,9 +42,9 @@ jobs:
 
       - name: Install and verify Akeyless CLI
         run: |
-          curl -o akeyless https://github.com/akeylesslabs/akeyless-cli/releases/latest/download/akeyless-cli-linux
-          chmod +x akeyless
-          sudo mv akeyless /usr/local/bin/
+          curl -o akeyless https://akeyless-cli.s3.us-east-2.amazonaws.com/cli/latest/production/cli-linux-amd64
+          sudo chmod +x akeyless
+          sudo mv akeyless /usr/local/bin
           which akeyless
           akeyless --version
 
