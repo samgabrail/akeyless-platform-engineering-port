@@ -32,8 +32,8 @@ env:
   AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
   AKEYLESS_ACCESS_SECRET: ${{ secrets.AKEYLESS_ACCESS_SECRET }}
   PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-  AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8000'
-  AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: './gateway_cert.pem'
+  # AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8000'
+  # AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: './gateway_cert.pem'
 
 jobs:
   deploy-wordpress:
@@ -74,6 +74,7 @@ jobs:
           pwd
           ls -la
           echo $AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE
+          cat $AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE
           SECRET_JSON=$(akeyless get-secret-value --name "${{ github.event.inputs.akeyless_mysql_secret_name }}")
           echo $SECRET_JSON
           if ! MYSQL_ROOT_PASSWORD=$(echo "$SECRET_JSON" | jq -r .password); then
@@ -154,6 +155,9 @@ jobs:
             --mysql-statements "CREATE USER '{{name}}'@'%' IDENTIFIED WITH mysql_native_password BY '{{password}}' PASSWORD EXPIRE INTERVAL 30 DAY;GRANT SELECT ON *.* TO '{{name}}'@'%';" \
             --mysql-revocation-statements "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '{{name}}'@'%'; DROP USER '{{name}}'@'%';" \
             --password-length 16
+        env:
+          AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8000'
+          AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: './gateway_cert.pem'
 
       - name: Update WordPress deployment for dynamic secret
         run: |
