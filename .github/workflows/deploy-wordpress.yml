@@ -41,11 +41,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install Akeyless CLI
+      - name: Install and verify Akeyless CLI
         run: |
           curl -o akeyless https://github.com/akeylesslabs/akeyless-cli/releases/latest/download/akeyless-cli-linux
           chmod +x akeyless
           sudo mv akeyless /usr/local/bin/
+          which akeyless
+          akeyless --version
 
       - name: Create new repository
         uses: actions/github-script@v6
