@@ -50,8 +50,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            await github.rest.repos.createInOrg({
-              org: context.repo.owner,
+            await github.rest.repos.createForAuthenticatedUser({
               name: '${{ github.event.inputs.repo_name }}',
               private: true
             })
