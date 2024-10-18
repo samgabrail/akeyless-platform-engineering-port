@@ -112,10 +112,10 @@ jobs:
           git commit -m "Add WordPress and MySQL manifests with Akeyless integration"
           git push
       
-      - name: Install Argo CD CLI
-        run: |
-          sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          sudo chmod +x /usr/local/bin/argocd
+      # - name: Install Argo CD CLI
+      #   run: |
+      #     sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+      #     sudo chmod +x /usr/local/bin/argocd
     
       - name: Login to Argo CD
         run: argocd login ${{ secrets.ARGOCD_SERVER }} --username ${{ secrets.ARGOCD_USER }} --password ${{ secrets.ARGOCD_PASS }} --grpc-web --insecure
