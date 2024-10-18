@@ -75,11 +75,16 @@ jobs:
           git commit -m "Add WordPress and MySQL manifests with Akeyless integration"
           git push
 
-      - name: Install ArgoCD CLI
+      - name: Install Argo CD CLI
         run: |
-          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          chmod +x argocd
-          sudo mv argocd /usr/local/bin/
+          sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          sudo chmod +x /usr/local/bin/argocd
+    
+      - name: Login to Argo CD
+        run: argocd login ${{ secrets.ARGOCD_SERVER }} --username ${{ secrets.ARGOCD_USER }} --password ${{ secrets.ARGOCD_PASS }} --grpc-web --insecure
+    
+      - name: Register Repository in Argo CD
+        run: argocd repo add ${{ github.event.inputs.repo_name }} --username samgabrail --password ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Create ArgoCD Application
         run: |
@@ -88,9 +93,11 @@ jobs:
             --path . \
             --dest-server https://kubernetes.default.svc \
             --dest-namespace ${{ github.event.inputs.namespace }} \
+            --project default \
             --sync-policy automated \
-            --server ${{ env.ARGOCD_SERVER }} \
-            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
+            --sync-option CreateNamespace=true \
+            --upsert \
+            --grpc-web \
 
       - name: Wait for initial deployment
         run: |
