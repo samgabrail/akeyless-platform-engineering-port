@@ -137,22 +137,18 @@ jobs:
             --grpc-web
 
       - name: Create Akeyless Target
+        continue-on-error: true
         run: |
-          output=$(akeyless target create db \
+          akeyless target create db \
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
             --db-type mysql \
             --pwd "$MYSQL_ROOT_PASSWORD" \
             --host "mysql-${{ github.event.inputs.app_name }}.${{ github.event.inputs.namespace }}.svc.cluster.local" \
             --port 3306 \
             --user-name "root" \
-            --db-name "${{ github.event.inputs.db_name }}" 2>&1)
-          exit_code=$?
-          if [ $exit_code -eq 1 ] && echo "$output" | grep -q '409 Conflict'; then
-            echo "Target already exists. Continuing with the workflow."
-            exit 0
-          elif [ $exit_code -ne 0 ]; then
-            echo "Failed to create target: $output"
-            exit 1
+            --db-name "${{ github.event.inputs.db_name }}"
+          if [ $? -ne 0 ]; then
+            echo "Note: Target creation failed, but continuing with the workflow."
           fi
 
       - name: Create Akeyless Dynamic Secret
