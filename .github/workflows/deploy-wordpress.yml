@@ -165,14 +165,14 @@ jobs:
             echo "Note: Dynamic Secret creation failed because it already exists, but continuing with the workflow."
           fi
         env:
-          AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8080'
+          AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8080' # port 8080 is for api v1 and 8081 is for api v2
           AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: './gateway_cert.pem'
 
 
       - name: Update WordPress deployment for dynamic secret
         run: |
           cd ${{ github.event.inputs.repo_name }}
-          sed -i 's/${{ github.event.inputs.akeyless_mysql_secret_name }}/${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic/g' wordpress-deployment.yaml
+          sed -i 's#${{ github.event.inputs.akeyless_mysql_secret_name }}#${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic#g' wordpress-deployment.yaml
           git add wordpress-deployment.yaml
           git commit -m "Update WordPress deployment to use dynamic secret"
           git push
@@ -200,10 +200,3 @@ jobs:
       #     clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
       #     baseUrl: https://api.getport.io
       #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
-
-
-
-      - name: Verify certificate content
-        run: |
-          cat gateway_cert.pem
-          echo "Certificate file size: $(wc -c < gateway_cert.pem) bytes"
