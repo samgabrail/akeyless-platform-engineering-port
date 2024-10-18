@@ -36,7 +36,7 @@ env:
 
 jobs:
   deploy-wordpress:
-    runs-on: ubuntu-latest
+    runs-on: sam-desktop
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -64,9 +64,26 @@ jobs:
               private: true
             })
 
-      - name: Create Kubernetes Secret for MySQL Root Password
+
+      - name: Configure Akeyless CLI
         run: |
-          MYSQL_ROOT_PASSWORD=$(akeyless get-secret-value --name "${{ github.event.inputs.akeyless_mysql_secret_name }}" | jq -r .password)
+          akeyless configure --access-id "$AKEYLESS_ACCESS_ID" --access-key "$AKEYLESS_ACCESS_SECRET"
+
+      - name: Retrieve MySQL root password and create Kubernetes Secret
+        run: |
+          SECRET_JSON=$(akeyless get-secret-value --name "${{ github.event.inputs.akeyless_mysql_secret_name }}")
+          if ! MYSQL_ROOT_PASSWORD=$(echo "$SECRET_JSON" | jq -r .password); then
+            echo "Failed to parse JSON, using raw secret value"
+            MYSQL_ROOT_PASSWORD="$SECRET_JSON"
+          fi
+          
+          if [ -z "$MYSQL_ROOT_PASSWORD" ]; then
+            echo "Failed to retrieve MySQL root password"
+            exit 1
+          fi
+          
+          echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" >> $GITHUB_ENV
+          
           kubectl create secret generic mysql-root-secret \
             --from-literal=mysql-root-password="$MYSQL_ROOT_PASSWORD" \
             --namespace=${{ github.event.inputs.namespace }} \
@@ -89,7 +106,7 @@ jobs:
           git add .
           git commit -m "Add WordPress and MySQL manifests with Akeyless integration"
           git push
-
+      
       - name: Install Argo CD CLI
         run: |
           sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
@@ -114,19 +131,12 @@ jobs:
             --upsert \
             --grpc-web
 
-      - name: Retrieve and parse MySQL root password
+      - name: Create Akeyless Target
         run: |
-          SECRET_JSON=$(akeyless get-secret-value --name "${{ github.event.inputs.akeyless_mysql_secret_name }}")
-          MYSQL_ROOT_PASSWORD=$(echo $SECRET_JSON | jq -r .password)
-          echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" >> $GITHUB_ENV
-
-      - name: Configure Akeyless and Create Target
-        run: |
-          akeyless configure --access-id "$AKEYLESS_ACCESS_ID" --access-key "$AKEYLESS_ACCESS_SECRET"
           akeyless target create db \
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
             --db-type mysql \
-            --pwd "${{ env.MYSQL_ROOT_PASSWORD }}" \
+            --pwd "$MYSQL_ROOT_PASSWORD" \
             --host "mysql-${{ github.event.inputs.app_name }}.${{ github.event.inputs.namespace }}.svc.cluster.local" \
             --port 3306 \
             --user-name "root" \
@@ -171,6 +181,6 @@ jobs:
       #     clientId: ${{ secrets.PORT_CLIENT_ID }}
       #     clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
       #     baseUrl: https://api.getport.io
-      #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}
+      #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
 
 
