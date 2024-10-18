@@ -97,13 +97,7 @@ jobs:
             --sync-policy automated \
             --sync-option CreateNamespace=true \
             --upsert \
-            --grpc-web \
-
-      - name: Wait for initial deployment
-        run: |
-          argocd app wait ${{ github.event.inputs.app_name }} --timeout 300 \
-            --server ${{ env.ARGOCD_SERVER }} \
-            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
+            --grpc-web
 
       - name: Configure Akeyless Dynamic Secret
         run: |
