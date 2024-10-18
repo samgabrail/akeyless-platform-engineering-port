@@ -6,29 +6,31 @@ on:
       app_name:
         required: true
         type: string
+        default: "wordpress"
       namespace:
-        required: true
+        required: false
         type: string
+        default: "wordpress"
       db_name:
         required: true
         type: string
+        default: "wordpress"
       akeyless_mysql_secret_name:
         required: true
         type: string
+        default: "/demos/mysql_root_password"
       repo_name:
         required: true
         type: string
-      port_payload:
-        required: true
-        type: string
+      # port_payload:
+      #   required: true
+      #   type: string
 
 env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
   ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
   AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
-  AKEYLESS_ACCESS_TYPE: ${{ secrets.AKEYLESS_ACCESS_TYPE }}
-  AKEYLESS_ACCESS_TYPE_PARAM: ${{ secrets.AKEYLESS_ACCESS_TYPE_PARAM }}
+  AKEYLESS_ACCESS_SECRET: ${{ secrets.AKEYLESS_ACCESS_SECRET }}
 
 jobs:
   deploy-wordpress:
@@ -46,7 +48,6 @@ jobs:
       - name: Create new repository
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             await github.rest.repos.createInOrg({
               org: context.repo.owner,
@@ -56,8 +57,8 @@ jobs:
 
       - name: Prepare and push manifests
         run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
+          git config --global user.email "inf@tekanaid.com"
+          git config --global user.name "TeKanAid Automation"
           git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git
           cd ${{ github.event.inputs.repo_name }}
           
@@ -97,7 +98,7 @@ jobs:
 
       - name: Configure Akeyless Dynamic Secret
         run: |
-          akeyless configure --access-id "$AKEYLESS_ACCESS_ID" --access-type "$AKEYLESS_ACCESS_TYPE" --access-type-param "$AKEYLESS_ACCESS_TYPE_PARAM"
+          akeyless configure --access-id "$AKEYLESS_ACCESS_ID" --access-key "$AKEYLESS_ACCESS_SECRET"
           akeyless create-dynamic-secret \
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic" \
             --producer-type mysql \
@@ -110,7 +111,7 @@ jobs:
       - name: Update WordPress deployment for dynamic secret
         run: |
           cd ${{ github.event.inputs.repo_name }}
-          sed -i 's/{{AKEYLESS_MYSQL_SECRET_NAME}}/${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic/g' wordpress-deployment.yaml
+          sed -i 's/${{ github.event.inputs.akeyless_mysql_secret_name }}/${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic/g' wordpress-deployment.yaml
           git add wordpress-deployment.yaml
           git commit -m "Update WordPress deployment to use dynamic secret"
           git push
@@ -121,22 +122,22 @@ jobs:
             --server ${{ env.ARGOCD_SERVER }} \
             --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
 
-      - name: Update Port
-        uses: port-labs/port-github-action@v1
-        with:
-          identifier: ${{ github.event.inputs.app_name }}
-          title: ${{ github.event.inputs.app_name }}
-          blueprint: service
-          properties: |
-            {
-              "name": "${{ github.event.inputs.app_name }}",
-              "namespace": "${{ github.event.inputs.namespace }}",
-              "database": "${{ github.event.inputs.db_name }}",
-              "akeylessMysqlSecret": "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic",
-              "repository": "${{ github.event.inputs.repo_name }}"
-            }
-          relations: {}
-          clientId: ${{ secrets.PORT_CLIENT_ID }}
-          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
-          baseUrl: https://api.getport.io
-          runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}
+      # - name: Update Port
+      #   uses: port-labs/port-github-action@v1
+      #   with:
+      #     identifier: ${{ github.event.inputs.app_name }}
+      #     title: ${{ github.event.inputs.app_name }}
+      #     blueprint: service
+      #     properties: |
+      #       {
+      #         "name": "${{ github.event.inputs.app_name }}",
+      #         "namespace": "${{ github.event.inputs.namespace }}",
+      #         "database": "${{ github.event.inputs.db_name }}",
+      #         "akeylessMysqlSecret": "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic",
+      #         "repository": "${{ github.event.inputs.repo_name }}"
+      #       }
+      #     relations: {}
+      #     clientId: ${{ secrets.PORT_CLIENT_ID }}
+      #     clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+      #     baseUrl: https://api.getport.io
+      #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}
