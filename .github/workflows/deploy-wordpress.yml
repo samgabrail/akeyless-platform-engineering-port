@@ -33,8 +33,7 @@ env:
   AKEYLESS_ACCESS_SECRET: ${{ secrets.AKEYLESS_ACCESS_SECRET }}
   PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
   AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8000'
-  AKEYLESS_GATEWAY_CERT: ${{ secrets.AKEYLESS_GATEWAY_CERT }}
-  AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: '/tmp/gateway_cert.pem'
+  AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: ../gateway_cert.pem
 
 jobs:
   deploy-wordpress:
@@ -55,11 +54,6 @@ jobs:
       #     which akeyless
       #     akeyless --init
 
-      - name: Setup Akeyless Gateway certificate
-        run: |
-          echo "${{ secrets.AKEYLESS_GATEWAY_CERT }}" > /tmp/akeyless_gateway.crt
-          echo "AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE=/tmp/akeyless_gateway.crt" >> $GITHUB_ENV
-
       - name: Create new repository
         uses: actions/github-script@v6
         with:
@@ -77,6 +71,9 @@ jobs:
 
       - name: Retrieve MySQL root password and create Kubernetes Secret
         run: |
+          pwd
+          ls -la
+          echo $AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE
           SECRET_JSON=$(akeyless get-secret-value --name "${{ github.event.inputs.akeyless_mysql_secret_name }}")
           if ! MYSQL_ROOT_PASSWORD=$(echo "$SECRET_JSON" | jq -r .password); then
             echo "Failed to parse JSON, using raw secret value"
