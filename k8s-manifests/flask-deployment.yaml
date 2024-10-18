@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{APP_NAME}}
+  namespace: {{NAMESPACE}}
+  annotations:
+    akeyless.io/inject-secrets: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{APP_NAME}}
+  template:
+    metadata:
+      labels:
+        app: {{APP_NAME}}
+      annotations:
+        akeyless.io/inject-secrets: "true"
+        akeyless.io/dynamic-secret-name: "{{AKEYLESS_MYSQL_SECRET_NAME}}_dynamic"
+        akeyless.io/dynamic-secret-file-name: "/secrets/db-creds.json"
+        akeyless.io/dynamic-secret-ttl: "1h"
+    spec:
+      volumes:
+        - name: secrets-volume
+          emptyDir: {}
+      containers:
+        - name: flask-app
+          image: your-docker-registry/flask-app:latest  # You'll need to build and push this image
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: /secrets
+              readOnly: true
+          env:
+            - name: DB_HOST
+              value: mysql-{{APP_NAME}}
+            - name: DB_NAME
+              value: {{DB_NAME}}
+          ports:
+            - containerPort: 8080
+

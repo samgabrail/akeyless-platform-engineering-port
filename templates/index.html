@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQL Database Info</title>
+</head>
+<body>
+    <h1>MySQL Database Tables</h1>
+    <ul>
+    {% for table in tables %}
+        <li>{{ table[0] }}</li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
+
