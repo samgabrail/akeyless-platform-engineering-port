@@ -148,10 +148,11 @@ jobs:
             --user-name "root" \
             --db-name "${{ github.event.inputs.db_name }}"
           if [ $? -ne 0 ]; then
-            echo "Note: Target creation failed, but continuing with the workflow."
+            echo "Note: Target creation failed because it already exists, but continuing with the workflow."
           fi
 
       - name: Create Akeyless Dynamic Secret
+        continue-on-error: true
         run: |
           akeyless dynamic-secret create mysql \
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic" \
@@ -160,8 +161,11 @@ jobs:
             --mysql-statements "CREATE USER '{{name}}'@'%' IDENTIFIED WITH mysql_native_password BY '{{password}}' PASSWORD EXPIRE INTERVAL 30 DAY;GRANT SELECT ON *.* TO '{{name}}'@'%';" \
             --mysql-revocation-statements "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '{{name}}'@'%'; DROP USER '{{name}}'@'%';" \
             --password-length 16
+          if [ $? -ne 0 ]; then
+            echo "Note: Dynamic Secret creation failed because it already exists, but continuing with the workflow."
+          fi
         env:
-          AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8081'
+          AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8080'
           AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: './gateway_cert.pem'
 
 
