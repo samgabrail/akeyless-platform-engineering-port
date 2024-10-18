@@ -20,6 +20,9 @@ spec:
         image: mysql:5.7
         env:
         - name: MYSQL_ROOT_PASSWORD
-          value: "{{ .Secrets.{{AKEYLESS_MYSQL_SECRET_NAME}}.password }}"
+          valueFrom:
+            secretKeyRef:
+              name: mysql-root-secret
+              key: mysql-root-password
         - name: MYSQL_DATABASE
           value: {{DB_NAME}}

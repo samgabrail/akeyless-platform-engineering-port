@@ -32,6 +32,7 @@ env:
   AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
   AKEYLESS_ACCESS_SECRET: ${{ secrets.AKEYLESS_ACCESS_SECRET }}
   PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+  AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8000'  # Replace with your actual Gateway URL
 
 jobs:
   deploy-wordpress:
@@ -48,6 +49,11 @@ jobs:
           which akeyless
           akeyless --init
 
+      - name: Setup Akeyless Gateway certificate
+        run: |
+          echo "${{ secrets.AKEYLESS_GATEWAY_CERT }}" > /tmp/akeyless_gateway.crt
+          echo "AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE=/tmp/akeyless_gateway.crt" >> $GITHUB_ENV
+
       - name: Create new repository
         uses: actions/github-script@v6
         with:
@@ -57,6 +63,14 @@ jobs:
               name: '${{ github.event.inputs.repo_name }}',
               private: true
             })
+
+      - name: Create Kubernetes Secret for MySQL Root Password
+        run: |
+          MYSQL_ROOT_PASSWORD=$(akeyless get-secret-value --name "${{ github.event.inputs.akeyless_mysql_secret_name }}" | jq -r .password)
+          kubectl create secret generic mysql-root-secret \
+            --from-literal=mysql-root-password="$MYSQL_ROOT_PASSWORD" \
+            --namespace=${{ github.event.inputs.namespace }} \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Prepare and push manifests
         run: |
@@ -100,17 +114,32 @@ jobs:
             --upsert \
             --grpc-web
 
-      - name: Configure Akeyless Dynamic Secret
+      - name: Retrieve and parse MySQL root password
+        run: |
+          SECRET_JSON=$(akeyless get-secret-value --name "${{ github.event.inputs.akeyless_mysql_secret_name }}")
+          MYSQL_ROOT_PASSWORD=$(echo $SECRET_JSON | jq -r .password)
+          echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" >> $GITHUB_ENV
+
+      - name: Configure Akeyless and Create Target
         run: |
           akeyless configure --access-id "$AKEYLESS_ACCESS_ID" --access-key "$AKEYLESS_ACCESS_SECRET"
-          akeyless create-dynamic-secret \
-            --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic" \
-            --producer-type mysql \
-            --mysql-host "mysql-${{ github.event.inputs.app_name }}.${{ github.event.inputs.namespace }}.svc.cluster.local" \
-            --mysql-port 3306 \
-            --mysql-username "root" \
-            --mysql-password "{{ .Secrets.${{ github.event.inputs.akeyless_mysql_secret_name }}.password }}" \
+          akeyless target create db \
+            --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
+            --db-type mysql \
+            --pwd "${{ env.MYSQL_ROOT_PASSWORD }}" \
+            --host "mysql-${{ github.event.inputs.app_name }}.${{ github.event.inputs.namespace }}.svc.cluster.local" \
+            --port 3306 \
+            --user-name "root" \
             --db-name "${{ github.event.inputs.db_name }}"
+
+      - name: Create Akeyless Dynamic Secret
+        run: |
+          akeyless dynamic-secret create mysql \
+            --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic" \
+            --target-name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
+            --mysql-statements "CREATE USER '{{name}}'@'%' IDENTIFIED WITH mysql_native_password BY '{{password}}' PASSWORD EXPIRE INTERVAL 30 DAY;GRANT SELECT ON *.* TO '{{name}}'@'%';" \
+            --mysql-revocation-statements "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '{{name}}'@'%'; DROP USER '{{name}}'@'%';" \
+            --password-length 16
 
       - name: Update WordPress deployment for dynamic secret
         run: |
@@ -143,3 +172,5 @@ jobs:
       #     clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
       #     baseUrl: https://api.getport.io
       #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}
+
+
