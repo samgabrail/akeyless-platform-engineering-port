@@ -69,7 +69,7 @@ jobs:
           sed -i 's/{{APP_NAME}}/${{ github.event.inputs.app_name }}/g' *.yaml
           sed -i 's/{{NAMESPACE}}/${{ github.event.inputs.namespace }}/g' *.yaml
           sed -i 's/{{DB_NAME}}/${{ github.event.inputs.db_name }}/g' *.yaml
-          sed -i 's/{{AKEYLESS_MYSQL_SECRET_NAME}}/${{ github.event.inputs.akeyless_mysql_secret_name }}/g' *.yaml
+          sed -i 's#{{AKEYLESS_MYSQL_SECRET_NAME}}#${{ github.event.inputs.akeyless_mysql_secret_name }}#g' *.yaml
           
           git add .
           git commit -m "Add WordPress and MySQL manifests with Akeyless integration"
