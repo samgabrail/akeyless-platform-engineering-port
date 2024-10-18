@@ -161,7 +161,7 @@ jobs:
             --mysql-revocation-statements "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '{{name}}'@'%'; DROP USER '{{name}}'@'%';" \
             --password-length 16
         env:
-          AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8000'
+          AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8081'
           AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: './gateway_cert.pem'
 
 
