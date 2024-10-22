@@ -29,6 +29,13 @@ spec:
       annotations:
         akeyless.io/inject-secrets: "true"
     spec:
+      initContainers:
+        - name: init-mysql
+          image: busybox
+          command: ['sh', '-c', '[ ! -d /var/lib/mysql/mysql ] || rm -rf /var/lib/mysql/*']
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
       containers:
       - name: mysql
         image: mysql:5.7
@@ -45,6 +52,9 @@ spec:
             mountPath: /var/lib/mysql
           - name: mysql-initdb
             mountPath: /docker-entrypoint-initdb.d
+        ports:
+          - containerPort: 3306
+            name: mysql
       volumes:
         - name: mysql-persistent-storage
           persistentVolumeClaim:

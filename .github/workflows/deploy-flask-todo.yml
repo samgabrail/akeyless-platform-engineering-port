@@ -180,6 +180,7 @@ jobs:
           git add flask-deployment.yaml
           git commit -m "Update flask deployment to use dynamic secret"
           git push
+
       - name: Trigger ArgoCD sync
         run: |
           argocd app sync ${{ github.event.inputs.app_name }}
