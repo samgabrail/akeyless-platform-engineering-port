@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        form { margin-bottom: 20px; }
+        ul { list-style-type: none; padding: 0; }
+        li { margin-bottom: 10px; }
+        button { margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Todo List</h1>
+    
+    <form method="POST">
+        <input type="text" name="todo" placeholder="Enter a new todo" required>
+        <button type="submit" name="add">Add Todo</button>
+    </form>
+
+    <ul>
+    {% for todo in todos %}
+        <li>
+            {{ todo.task }}
+            <form method="POST" style="display: inline;">
+                <input type="hidden" name="delete" value="{{ todo.id }}">
+                <button type="submit">Delete</button>
+            </form>
+        </li>
+    {% endfor %}
+    </ul>
+</body>
+</html>

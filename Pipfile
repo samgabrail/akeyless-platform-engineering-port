@@ -1,0 +1,12 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "==2.0.1"
+werkzeug = "==2.0.1"
+mysql-connector-python = "==8.0.26"
+
+[requires]
+python_version = "3.10"

@@ -109,7 +109,7 @@ jobs:
           sed -i 's#{{AKEYLESS_MYSQL_SECRET_NAME}}#${{ github.event.inputs.akeyless_mysql_secret_name }}#g' *.yaml
           
           git add .
-          git commit -m "Add WordPress and MySQL manifests with Akeyless integration"
+          git commit -m "Add WordPress and MySQL manifests with Akeyless integration and database initialization"
           git push
       
       # - name: Install Argo CD CLI
