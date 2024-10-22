@@ -1,6 +1,7 @@
 from flask import render_template, request, redirect, url_for, current_app
 import mysql.connector
 import os
+import json
 
 def init_app(app):
     @app.route('/', methods=['GET', 'POST'])
@@ -17,11 +18,25 @@ def init_app(app):
 
 def get_db_connection():
     try:
+        # Try to read credentials from Akeyless-injected file first
+        if os.path.exists('/secrets/db-creds.json'):
+            with open('/secrets/db-creds.json') as f:
+                creds = json.loads(f.read())
+                username = creds['username']
+                password = creds['password']
+        else:
+            # Fall back to environment variables for local development
+            username = os.environ.get('DB_USERNAME', 'myuser')
+            password = os.environ.get('DB_PASSWORD', 'mypassword')
+
+        host = os.environ.get('DB_HOST', 'localhost')
+        database = os.environ.get('DB_NAME', 'todos')
+
         return mysql.connector.connect(
-            host=os.environ['DB_HOST'],
-            user=os.environ['DB_USERNAME'],
-            password=os.environ['DB_PASSWORD'],
-            database=os.environ['DB_NAME']
+            host=host,
+            user=username,
+            password=password,
+            database=database
         )
     except Exception as e:
         current_app.logger.error(f"Error connecting to database: {str(e)}")
