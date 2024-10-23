@@ -32,7 +32,17 @@ spec:
       initContainers:
         - name: init-mysql
           image: busybox
-          command: ['sh', '-c', '[ ! -d /var/lib/mysql/mysql ] || rm -rf /var/lib/mysql/*']
+          command: 
+            - /bin/sh
+            - -c
+            - |
+              if [ -d /var/lib/mysql/mysql ]; then
+                echo "MySQL data directory exists, skipping initialization"
+                exit 0
+              else
+                echo "Cleaning up data directory for fresh install"
+                rm -rf /var/lib/mysql/*
+              fi
           volumeMounts:
             - name: mysql-persistent-storage
               mountPath: /var/lib/mysql

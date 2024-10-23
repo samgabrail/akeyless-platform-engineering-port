@@ -25,7 +25,7 @@ spec:
           emptyDir: {}
       containers:
         - name: flask-app
-          image: your-docker-registry/flask-app:latest  # You'll need to build and push this image
+          image: your-docker-registry/flask-app:latest
           volumeMounts:
             - name: secrets-volume
               mountPath: /secrets
@@ -35,6 +35,8 @@ spec:
               value: mysql-{{APP_NAME}}
             - name: DB_NAME
               value: {{DB_NAME}}
+            - name: FLASK_APP
+              value: run.py
           ports:
-            - containerPort: 8080
+            - containerPort: 5000
 
