@@ -14,21 +14,14 @@ spec:
         app: {{APP_NAME}}
       annotations:
         akeyless/enabled: "true"
-        akeyless/inject_file: "{{AKEYLESS_MYSQL_SECRET_NAME}}_dynamic|location=/akeyless/secrets/db-creds.json"
+        akeyless/inject_file: "{{AKEYLESS_MYSQL_SECRET_NAME}}|location=/akeyless/secrets/db-creds.json"
         akeyless/side_car_enabled: "true"
         akeyless/side_car_refresh_interval: "5s"
         akeyless/side_car_versions_to_retrieve: "1"
     spec:
-      volumes:
-        - name: secrets-volume
-          emptyDir: {}
       containers:
         - name: flask-app
           image: your-docker-registry/flask-app:latest
-          volumeMounts:
-            - name: secrets-volume
-              mountPath: /akeyless/secrets
-              readOnly: true
           env:
             - name: DB_HOST
               value: mysql-{{APP_NAME}}
