@@ -38,5 +38,5 @@ spec:
             - name: FLASK_APP
               value: run.py
           ports:
-            - containerPort: 5000
+            - containerPort: 8080
 

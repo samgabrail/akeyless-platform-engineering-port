@@ -24,14 +24,18 @@ def get_db_connection():
                 creds = json.loads(f.read())
                 username = creds['username']
                 password = creds['password']
+                print(f"Using Akeyless credentials for user: {username}")
         else:
             # Fall back to environment variables for local development
             username = os.environ.get('DB_USERNAME', 'myuser')
             password = os.environ.get('DB_PASSWORD', 'mypassword')
+            print("Using fallback credentials")
 
         host = os.environ.get('DB_HOST', 'localhost')
         database = os.environ.get('DB_NAME', 'todos')
-
+        
+        print(f"Attempting to connect to MySQL - Host: {host}, Database: {database}, User: {username}")
+        
         return mysql.connector.connect(
             host=host,
             user=username,
