@@ -22,7 +22,7 @@ def get_db_connection():
         if os.path.exists('/akeyless/secrets/demos/mysql_root_password_dynamic'):
             with open('/akeyless/secrets/demos/mysql_root_password_dynamic') as f:
                 creds = json.loads(f.read())
-                username = creds['username']
+                username = creds['user']
                 password = creds['password']
                 print(f"Using Akeyless credentials for user: {username}")
         else:

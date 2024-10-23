@@ -144,6 +144,8 @@ jobs:
       - name: Create Akeyless Target
         continue-on-error: true
         run: |
+          # Wait a bit for DNS propagation
+          sleep 20
           akeyless target create db \
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
             --db-type mysql \
