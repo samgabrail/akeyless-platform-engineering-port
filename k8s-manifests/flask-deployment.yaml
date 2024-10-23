@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: {{APP_NAME}}
   namespace: {{NAMESPACE}}
-  annotations:
-    akeyless.io/inject-secrets: "true"
 spec:
   replicas: 1
   selector:
@@ -15,10 +13,11 @@ spec:
       labels:
         app: {{APP_NAME}}
       annotations:
-        akeyless.io/inject-secrets: "true"
-        akeyless.io/dynamic-secret-name: "{{AKEYLESS_MYSQL_SECRET_NAME}}_dynamic"
-        akeyless.io/dynamic-secret-file-name: "/secrets/db-creds.json"
-        akeyless.io/dynamic-secret-ttl: "1h"
+        akeyless/enabled: "true"
+        akeyless/inject_file: "{{AKEYLESS_MYSQL_SECRET_NAME}}_dynamic|location=/akeyless/secrets/db-creds.json"
+        akeyless/side_car_enabled: "true"
+        akeyless/side_car_refresh_interval: "5s"
+        akeyless/side_car_versions_to_retrieve: "1"
     spec:
       volumes:
         - name: secrets-volume
@@ -28,7 +27,7 @@ spec:
           image: your-docker-registry/flask-app:latest
           volumeMounts:
             - name: secrets-volume
-              mountPath: /secrets
+              mountPath: /akeyless/secrets
               readOnly: true
           env:
             - name: DB_HOST

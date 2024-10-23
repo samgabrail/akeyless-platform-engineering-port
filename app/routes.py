@@ -18,23 +18,20 @@ def init_app(app):
 
 def get_db_connection():
     try:
-        # Try to read credentials from Akeyless-injected file first
-        if os.path.exists('/secrets/db-creds.json'):
-            with open('/secrets/db-creds.json') as f:
+        # Update the path to match the new mount location
+        if os.path.exists('/akeyless/secrets/db-creds.json'):
+            with open('/akeyless/secrets/db-creds.json') as f:
                 creds = json.loads(f.read())
                 username = creds['username']
                 password = creds['password']
                 print(f"Using Akeyless credentials for user: {username}")
         else:
-            # Fall back to environment variables for local development
+            print("No secrets file found, using fallback credentials")
             username = os.environ.get('DB_USERNAME', 'myuser')
             password = os.environ.get('DB_PASSWORD', 'mypassword')
-            print("Using fallback credentials")
 
         host = os.environ.get('DB_HOST', 'localhost')
         database = os.environ.get('DB_NAME', 'todos')
-        
-        print(f"Attempting to connect to MySQL - Host: {host}, Database: {database}, User: {username}")
         
         return mysql.connector.connect(
             host=host,
