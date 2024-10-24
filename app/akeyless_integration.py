@@ -30,7 +30,7 @@ def authenticate_with_akeyless():
         "content-type": "application/json"
     }
 
-    response = requests.post(AUTH_URL, json=payload, headers=headers)
+    response = requests.post(AUTH_URL, json=payload, headers=headers, verify='/etc/ssl/certs/gateway_cert.pem')
     response.raise_for_status()
     return response.json().get('token')
 
@@ -48,7 +48,7 @@ def get_dynamic_secret(token):
         "content-type": "application/json"
     }
 
-    response = requests.post(SECRET_URL, json=payload, headers=headers)
+    response = requests.post(SECRET_URL, json=payload, headers=headers, verify='/etc/ssl/certs/gateway_cert.pem')
     response.raise_for_status()
     return response.json()
 

@@ -122,6 +122,13 @@ jobs:
           git commit -m "Add Flask Todo app and MySQL manifests with Akeyless integration"
           git push
 
+      - name: Create Kubernetes Secret for Gateway Certificate
+        run: |
+          kubectl create secret generic gateway-cert-secret \
+            --from-file=gateway_cert.pem=./gateway_cert.pem \
+            --namespace=${{ github.event.inputs.namespace }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+      
       - name: Login to Argo CD
         run: argocd login ${{ secrets.ARGOCD_SERVER }} --username ${{ secrets.ARGOCD_USER }} --password ${{ secrets.ARGOCD_PASS }} --grpc-web --insecure
     
@@ -206,3 +213,6 @@ jobs:
       #     clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
       #     baseUrl: https://api.getport.io
       #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
+
+
+
