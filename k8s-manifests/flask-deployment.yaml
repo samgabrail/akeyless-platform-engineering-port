@@ -16,7 +16,7 @@ spec:
         akeyless/enabled: "true"
         akeyless/inject_file: "{{AKEYLESS_MYSQL_SECRET_NAME}}|location=/akeyless/secrets/db-creds.json"
         akeyless/side_car_enabled: "true"
-        akeyless/side_car_refresh_interval: "5s"
+        akeyless/side_car_refresh_interval: "15s"
         akeyless/side_car_versions_to_retrieve: "1"
     spec:
       containers:
