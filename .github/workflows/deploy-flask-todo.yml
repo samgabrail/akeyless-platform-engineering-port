@@ -106,9 +106,16 @@ jobs:
           git clone https://x-access-token:${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git
           cd ${{ github.event.inputs.repo_name }}
           
-          # Copy and modify manifest files
+          # Copy and modify manifest files and source code
           cp -r ../k8s-manifests/* .
-          
+          cp -r ../app/ .
+          cp ../Dockerfile* .
+          cp ../requirements.txt .
+          cp ../Pipfile .
+          cp ../Pipfile.lock .
+          cp ../run.py .
+          cp ../README.md .
+
           # Update image reference in deployment
           sed -i 's#your-docker-registry/flask-app:latest#ghcr.io/${{ github.repository_owner }}/flask-todo:latest#g' flask-deployment.yaml
           
@@ -214,6 +221,3 @@ jobs:
       #     clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
       #     baseUrl: https://api.getport.io
       #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
-
-
-
