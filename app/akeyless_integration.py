@@ -1,3 +1,4 @@
+import base64
 import requests
 import os
 import mysql.connector
@@ -16,6 +17,7 @@ def get_k8s_service_account_token():
 # Authenticate with Akeyless using Kubernetes auth
 def authenticate_with_akeyless():
     k8s_service_account_token = get_k8s_service_account_token()
+    print(f"K8s service account token: {k8s_service_account_token}")
     payload = {
         "access-type": "k8s",
         "json": True,
@@ -23,14 +25,16 @@ def authenticate_with_akeyless():
         "debug": True,
         "gateway-url": "https://192.168.1.82:8000",
         "k8s-auth-config-name": "/demos/K8s-Auth-for-Demos",
-        "k8s-service-account-token": k8s_service_account_token,
+        "k8s-service-account-token": base64.b64encode(k8s_service_account_token.encode()).decode(),
     }
+    print(f"Authentication payload: {payload}")
     headers = {
         "accept": "application/json",
         "content-type": "application/json"
     }
 
-    response = requests.post(AUTH_URL, json=payload, headers=headers, verify='/etc/ssl/certs/gateway_cert.pem')
+    response = requests.post(AUTH_URL, json=payload, headers=headers, verify=False)
+    print(f"Authentication response: {response.json()}")
     response.raise_for_status()
     return response.json().get('token')
 
@@ -40,7 +44,6 @@ def get_dynamic_secret(token):
         "json": True,
         "timeout": 15,
         "name": "/demos/mysql_root_password_dynamic",
-        "target": "/demos/mysql_root_password_target",
         "token": token
     }
     headers = {
@@ -48,7 +51,8 @@ def get_dynamic_secret(token):
         "content-type": "application/json"
     }
 
-    response = requests.post(SECRET_URL, json=payload, headers=headers, verify='/etc/ssl/certs/gateway_cert.pem')
+    response = requests.post(SECRET_URL, json=payload, headers=headers, verify=False)
+    print(f"Dynamic secret response: {response.json()}")
     response.raise_for_status()
     return response.json()
 
@@ -62,7 +66,8 @@ def get_db_connection(retries=3, delay=5):
             password = secret['password']
             host = os.environ.get('DB_HOST', 'localhost')
             database = os.environ.get('DB_NAME', 'todos')
-
+            print(f"Using Akeyless credentials for user: {username}")
+            print(f"Using Akeyless credentials for password: {password}")
             return mysql.connector.connect(
                 host=host,
                 user=username,
