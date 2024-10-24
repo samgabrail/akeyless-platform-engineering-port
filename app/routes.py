@@ -1,5 +1,6 @@
 from flask import render_template, request, redirect, url_for, current_app
-from .akeyless_integration import get_db_connection
+
+from .akeyless_integration import get_db
 
 def init_app(app):
     @app.route('/', methods=['GET', 'POST'])
@@ -12,10 +13,11 @@ def init_app(app):
             return redirect(url_for('index'))
 
         try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
+            db = get_db()
+            cursor = db.cursor(dictionary=True)
             cursor.execute("SELECT * FROM todos")
             todos = cursor.fetchall()
+            cursor.close()
             return render_template('index.html', todos=todos)
         except Exception as e:
             return f"An error occurred: {e}"
@@ -23,26 +25,26 @@ def init_app(app):
 def get_todos():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
+    print(f"Cursor type: {type(cursor)}")
     cursor.execute('SELECT * FROM todos')
+    print(f"Cursor description: {cursor.description}")
     todos = cursor.fetchall()
     cursor.close()
     conn.close()
     return todos
 
 def add_todo(todo):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    db = get_db()
+    cursor = db.cursor()
     cursor.execute('INSERT INTO todos (task) VALUES (%s)', (todo,))
-    conn.commit()
+    db.commit()
     cursor.close()
-    conn.close()
 
 def delete_todo(todo_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    db = get_db()
+    cursor = db.cursor()
     cursor.execute('DELETE FROM todos WHERE id = %s', (todo_id,))
-    conn.commit()
+    db.commit()
     cursor.close()
-    conn.close()
 
 print("Routes module loaded")

@@ -23,9 +23,9 @@
     <ul>
     {% for todo in todos %}
         <li>
-            {{ todo.task }}
+            {{ todo['task'] }}
             <form method="POST" style="display: inline;">
-                <input type="hidden" name="delete" value="{{ todo.id }}">
+                <input type="hidden" name="delete" value="{{ todo['id'] }}">
                 <button type="submit">Delete</button>
             </form>
         </li>

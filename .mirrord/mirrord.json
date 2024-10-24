@@ -1,0 +1,17 @@
+{
+    "target": {
+        "path": "deployment/flask-deployment",
+        "namespace": "flask-todo"
+    },
+    "agent": {
+        "namespace": "flask-todo"
+    },
+    "feature": {
+        "network": {
+            "incoming": "mirror",
+            "outgoing": true
+        },
+        "fs": "read",
+        "env": true
+    }
+}
