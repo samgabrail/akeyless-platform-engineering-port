@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, url_for, current_app
-from akeyless_integration import get_db_connection
+from .akeyless_integration import get_db_connection
 
 def init_app(app):
     @app.route('/', methods=['GET', 'POST'])

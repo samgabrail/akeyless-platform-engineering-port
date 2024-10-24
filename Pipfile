@@ -7,6 +7,7 @@ name = "pypi"
 flask = "==2.2.5"
 werkzeug = "==3.0.4"
 mysql-connector-python = "==8.0.26"
+requests = "*"
 
 [requires]
 python_version = "3.10"
