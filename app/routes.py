@@ -19,8 +19,8 @@ def init_app(app):
 def get_db_connection():
     try:
         # Update the path to match the new mount location
-        if os.path.exists('/akeyless/secrets/demos/mysql_root_password_dynamic'):
-            with open('/akeyless/secrets/demos/mysql_root_password_dynamic') as f:
+        if os.path.exists('/akeyless/secrets/db-creds.json'):
+            with open('/akeyless/secrets/db-creds.json') as f:
                 creds = json.loads(f.read())
                 username = creds['user']
                 password = creds['password']

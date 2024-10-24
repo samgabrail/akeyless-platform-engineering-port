@@ -165,7 +165,7 @@ jobs:
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic" \
             --target-name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
             --gateway-url ${{ env.AKEYLESS_GATEWAY_URL }} \
-            --mysql-statements "CREATE USER '{{name}}'@'%' IDENTIFIED WITH mysql_native_password BY '{{password}}' PASSWORD EXPIRE INTERVAL 30 DAY;GRANT ALL PRIVILEGES ON ${{ github.event.inputs.db_name }}.* TO '{{name}}'@'%';" \
+            --mysql-statements "CREATE USER '{{name}}'@'%' IDENTIFIED WITH mysql_native_password BY '{{password}}' PASSWORD EXPIRE INTERVAL 30 DAY;GRANT ALL PRIVILEGES ON \`${{ github.event.inputs.db_name }}\`.* TO '{{name}}'@'%';" \
             --mysql-revocation-statements "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '{{name}}'@'%'; DROP USER '{{name}}'@'%';" \
             --password-length 16
           if [ $? -ne 0 ]; then
