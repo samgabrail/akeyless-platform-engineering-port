@@ -66,7 +66,7 @@ jobs:
             // Create the repository
             await github.rest.repos.createForAuthenticatedUser({
               name: '${{ github.event.inputs.repo_name }}',
-              private: true
+              private: false
             });
             
             // Enable workflow permissions
