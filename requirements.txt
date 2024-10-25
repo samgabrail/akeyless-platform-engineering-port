@@ -2,3 +2,4 @@ Flask==2.2.5
 mysql-connector-python==8.0.26
 werkzeug==3.0.4
 requests==2.32.3
+pytest==7.4.3
