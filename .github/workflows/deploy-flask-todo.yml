@@ -66,32 +66,7 @@ jobs:
             // Create the repository
             await github.rest.repos.createForAuthenticatedUser({
               name: '${{ github.event.inputs.repo_name }}',
-              private: false
-            });
-            
-            // Enable workflow permissions
-            await github.rest.repos.updateBranchProtection({
-              owner: context.repo.owner,
-              repo: '${{ github.event.inputs.repo_name }}',
-              branch: 'main',
-              required_status_checks: null,
-              enforce_admins: null,
-              required_pull_request_reviews: null,
-              restrictions: null,
-              allow_force_pushes: true,
-              allow_deletions: false
-            });
-            
-            // Enable Actions to create PRs
-            await github.rest.repos.update({
-              owner: context.repo.owner,
-              repo: '${{ github.event.inputs.repo_name }}',
-              allow_squash_merge: true,
-              allow_merge_commit: true,
-              allow_rebase_merge: true,
-              delete_branch_on_merge: true,
-              allow_auto_merge: true,
-              allow_update_branch: true
+              private: true
             });
 
       - name: Configure package access
