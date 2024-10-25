@@ -106,13 +106,18 @@ jobs:
           # Copy and modify manifest files and source code
           cp -r ../k8s-manifests/* .
           cp -r ../app/ .
-          cp ../Dockerfile* .
+          cp ../Dockerfile .
           cp ../requirements.txt .
           cp ../Pipfile .
           cp ../Pipfile.lock .
           cp ../run.py .
+          rm ../README.md
+          mv ../README-PythonApp.md ../README.md
           cp ../README.md .
-
+          # Create GitHub Actions workflow directory
+          mkdir -p .github/workflows
+          cp ../flask-todo-app/.github/workflows/build-and-push.yml .github/workflows/
+          
           # Update image reference in deployment
           sed -i 's#your-docker-registry/flask-app:latest#ghcr.io/${{ github.repository_owner }}/flask-todo:latest#g' flask-deployment.yaml
           
@@ -211,3 +216,5 @@ jobs:
       #     clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
       #     baseUrl: https://api.getport.io
       #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
+
+
