@@ -29,7 +29,7 @@ env:
   AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
   AKEYLESS_ACCESS_SECRET: ${{ secrets.AKEYLESS_ACCESS_SECRET }}
   PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-  DYNAMIC_SECRET_TTL: "15s"
+  DYNAMIC_SECRET_TTL: "15"
 
 jobs:
   deploy-flask-todo:
@@ -57,10 +57,6 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/flask-todo:latest
-
-      - name: Download Akeyless Gateway certificate
-        run: |
-          echo "${{ secrets.AKEYLESS_GATEWAY_CERT }}" > /tmp/gateway_cert.pem
 
       - name: Create new repository
         uses: actions/github-script@v6
@@ -181,7 +177,7 @@ jobs:
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic" \
             --target-name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
             --gateway-url ${{ env.AKEYLESS_GATEWAY_URL }} \
-            --user-ttl ${{ env.DYNAMIC_SECRET_TTL }} \
+            --user-ttl "${{ env.DYNAMIC_SECRET_TTL }}s" \
             --mysql-statements "CREATE USER '{{name}}'@'%' IDENTIFIED WITH mysql_native_password BY '{{password}}' PASSWORD EXPIRE INTERVAL 30 DAY;GRANT ALL PRIVILEGES ON \`${{ github.event.inputs.db_name }}\`.* TO '{{name}}'@'%';" \
             --mysql-revocation-statements "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '{{name}}'@'%'; DROP USER '{{name}}'@'%';" \
             --password-length 16
@@ -191,14 +187,6 @@ jobs:
         env:
           AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8080'
           AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: './gateway_cert.pem'
-
-      - name: Update Todolist deployment for dynamic secret
-        run: |
-          cd ${{ github.event.inputs.repo_name }}
-          sed -i 's#${{ github.event.inputs.akeyless_mysql_secret_name }}#${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic#g' flask-deployment.yaml
-          git add flask-deployment.yaml
-          git commit -m "Update flask deployment to use dynamic secret"
-          git push
 
       - name: Trigger ArgoCD sync
         run: |
