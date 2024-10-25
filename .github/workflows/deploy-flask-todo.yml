@@ -77,7 +77,7 @@ jobs:
             // Add package access for the new repository
             await github.rest.packages.setRepositoryPublic({
               package_type: 'container',
-              package_name: 'flask-todo',
+              package_name: '${{ github.event.inputs.app_name }}',  # Use the app_name input
               username: '${{ github.repository_owner }}',
               repository: '${{ github.event.inputs.repo_name }}'
             });
@@ -85,7 +85,7 @@ jobs:
             // Enable repository access to the package
             await github.rest.packages.addRepositoryAccess({
               package_type: 'container',
-              package_name: 'flask-todo',
+              package_name: '${{ github.event.inputs.app_name }}',  # Use the app_name input
               username: '${{ github.repository_owner }}',
               repository: '${{ github.event.inputs.repo_name }}'
             });
@@ -240,6 +240,8 @@ jobs:
       #     clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
       #     baseUrl: https://api.getport.io
       #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
+
+
 
 
 
