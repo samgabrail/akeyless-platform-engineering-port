@@ -75,11 +75,19 @@ jobs:
           github-token: ${{ env.PERSONAL_ACCESS_TOKEN }}
           script: |
             // Add package access for the new repository
-            await github.rest.packages.addRepositoryToPackageVisibilityLevel({
+            await github.rest.packages.setRepositoryPublic({
               package_type: 'container',
               package_name: 'flask-todo',
-              repository: '${{ github.event.inputs.repo_name }}',
-              visibility: 'private'
+              username: '${{ github.repository_owner }}',
+              repository: '${{ github.event.inputs.repo_name }}'
+            });
+
+            // Enable repository access to the package
+            await github.rest.packages.addRepositoryAccess({
+              package_type: 'container',
+              package_name: 'flask-todo',
+              username: '${{ github.repository_owner }}',
+              repository: '${{ github.event.inputs.repo_name }}'
             });
 
       - name: Configure Akeyless CLI
@@ -232,5 +240,6 @@ jobs:
       #     clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
       #     baseUrl: https://api.getport.io
       #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
+
 
 
