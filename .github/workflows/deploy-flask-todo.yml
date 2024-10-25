@@ -74,20 +74,24 @@ jobs:
         with:
           github-token: ${{ env.PERSONAL_ACCESS_TOKEN }}
           script: |
+            const packageName = context.payload.inputs.app_name;
+            const repoName = context.payload.inputs.repo_name;
+            const owner = context.repo.owner;
+
             // Add package access for the new repository
             await github.rest.packages.setRepositoryPublic({
               package_type: 'container',
-              package_name: '${{ github.event.inputs.app_name }}',  # Use the app_name input
-              username: '${{ github.repository_owner }}',
-              repository: '${{ github.event.inputs.repo_name }}'
+              package_name: packageName,
+              username: owner,
+              repository: repoName
             });
 
             // Enable repository access to the package
             await github.rest.packages.addRepositoryAccess({
               package_type: 'container',
-              package_name: '${{ github.event.inputs.app_name }}',  # Use the app_name input
-              username: '${{ github.repository_owner }}',
-              repository: '${{ github.event.inputs.repo_name }}'
+              package_name: packageName,
+              username: owner,
+              repository: repoName
             });
 
       - name: Configure Akeyless CLI
