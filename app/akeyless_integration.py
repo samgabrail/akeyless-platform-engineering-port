@@ -75,7 +75,15 @@ class RetryableConnectionPool:
     def __init__(self, app):
         self.app = app
         self.pool = None
+        self.last_refresh = 0
+        # Convert "15s" to integer seconds
+        ttl_str = os.environ.get('DYNAMIC_SECRET_TTL', '15s')
+        self.credential_ttl = int(ttl_str.rstrip('s'))
         self.init_pool()
+
+    def should_refresh(self):
+        """Check if credentials are about to expire"""
+        return time.time() - self.last_refresh >= (self.credential_ttl - 2)  # refresh 2s before expiry
 
     def init_pool(self):
         """Initialize or reinitialize the connection pool with fresh credentials"""
@@ -89,7 +97,11 @@ class RetryableConnectionPool:
                 'password': secret['password'],
                 'database': os.environ.get('DB_NAME', 'todos')
             })
+            if self.pool:
+                # Close all existing connections before creating new pool
+                self.pool._remove_connections()
             self.pool = mysql.connector.pooling.MySQLConnectionPool(**pool_config)
+            self.last_refresh = time.time()
             print("\033[92mConnection pool initialized/refreshed with new credentials\033[0m")
             print(f"\033[91muser: {secret['user']}\033[0m")
         except Exception as e:
@@ -97,10 +109,20 @@ class RetryableConnectionPool:
             raise
 
     def get_connection(self):
-        """Get a connection with retry logic"""
+        """Get a connection with retry logic and credential validation"""
+        if self.should_refresh():
+            print("\033[93mCredentials about to expire, refreshing pool\033[0m")
+            self.init_pool()
+
         for attempt in range(MAX_RETRIES):
             try:
-                return self.pool.get_connection()
+                conn = self.pool.get_connection()
+                # Validate connection with a simple query
+                cursor = conn.cursor()
+                cursor.execute("SELECT 1")
+                cursor.fetchall()  # Consume the result
+                cursor.close()
+                return conn
             except MySQLError as e:
                 if "Access denied" in str(e) or "Connection refused" in str(e):
                     print(f"\033[93mAttempt {attempt + 1}/{MAX_RETRIES}: Refreshing connection pool due to: {str(e)}\033[0m")

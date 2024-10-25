@@ -29,6 +29,7 @@ env:
   AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
   AKEYLESS_ACCESS_SECRET: ${{ secrets.AKEYLESS_ACCESS_SECRET }}
   PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+  DYNAMIC_SECRET_TTL: "15s"
 
 jobs:
   deploy-flask-todo:
@@ -124,6 +125,7 @@ jobs:
           sed -i 's/{{NAMESPACE}}/${{ github.event.inputs.namespace }}/g' *.yaml
           sed -i 's/{{DB_NAME}}/${{ github.event.inputs.db_name }}/g' *.yaml
           sed -i 's#{{AKEYLESS_MYSQL_SECRET_NAME}}#${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic#g' *.yaml
+          sed -i 's/{{DYNAMIC_SECRET_TTL}}/${{ env.DYNAMIC_SECRET_TTL }}/g' *.yaml  # Add this line
           
           git add .
           git commit -m "Add Flask Todo app and MySQL manifests with Akeyless integration"
@@ -179,7 +181,7 @@ jobs:
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic" \
             --target-name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
             --gateway-url ${{ env.AKEYLESS_GATEWAY_URL }} \
-            --user-ttl 15s \
+            --user-ttl ${{ env.DYNAMIC_SECRET_TTL }} \
             --mysql-statements "CREATE USER '{{name}}'@'%' IDENTIFIED WITH mysql_native_password BY '{{password}}' PASSWORD EXPIRE INTERVAL 30 DAY;GRANT ALL PRIVILEGES ON \`${{ github.event.inputs.db_name }}\`.* TO '{{name}}'@'%';" \
             --mysql-revocation-statements "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '{{name}}'@'%'; DROP USER '{{name}}'@'%';" \
             --password-length 16

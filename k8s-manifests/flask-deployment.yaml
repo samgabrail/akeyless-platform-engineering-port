@@ -21,6 +21,8 @@ spec:
               value: mysql-{{APP_NAME}}
             - name: DB_NAME
               value: {{DB_NAME}}
+            - name: DYNAMIC_SECRET_TTL
+              value: "{{DYNAMIC_SECRET_TTL}}"
             - name: FLASK_APP
               value: run.py
             - name: ENVIRONMENT
