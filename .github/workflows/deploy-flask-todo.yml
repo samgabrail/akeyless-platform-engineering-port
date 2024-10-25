@@ -69,30 +69,6 @@ jobs:
               private: true
             });
 
-      - name: Configure package access
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ env.PERSONAL_ACCESS_TOKEN }}
-          script: |
-            const packageName = context.payload.inputs.app_name;
-            const repoName = context.payload.inputs.repo_name;
-            const owner = context.repo.owner;
-
-            // Add package access for the new repository
-            await github.rest.packages.setRepositoryPublic({
-              package_type: 'container',
-              package_name: packageName,
-              username: owner,
-              repository: repoName
-            });
-
-            // Enable repository access to the package
-            await github.rest.packages.addRepositoryAccess({
-              package_type: 'container',
-              package_name: packageName,
-              username: owner,
-              repository: repoName
-            });
 
       - name: Configure Akeyless CLI
         run: |
