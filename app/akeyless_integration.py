@@ -111,7 +111,6 @@ class RetryableConnectionPool:
     def get_connection(self):
         """Get a connection with retry logic and credential validation"""
         if self.should_refresh():
-            print("\033[93mCredentials about to expire, refreshing pool\033[0m")
             self.init_pool()
 
         for attempt in range(MAX_RETRIES):
