@@ -42,12 +42,10 @@ jobs:
           echo "ARGOCD_SERVER=$(akeyless get-secret-value --name '/demos/argocd/server')" >> $GITHUB_ENV
           echo "ARGOCD_SERVER=$ARGOCD_SERVER"
           ARGOCD_CREDS=$(akeyless get-secret-value --name '/demos/argocd/user_creds')
-          echo "ARGOCD_CREDS=$ARGOCD_CREDS"
           echo "ARGOCD_USER=$(echo $ARGOCD_CREDS | jq -r '.username')" >> $GITHUB_ENV
           echo "ARGOCD_PASS=$(echo $ARGOCD_CREDS | jq -r '.password')" >> $GITHUB_ENV
           
           PORT_CREDS=$(akeyless get-secret-value --name '/demos/port/creds')
-          echo "PORT_CREDS=$PORT_CREDS"
           echo "PORT_CLIENT_ID=$(echo $PORT_CREDS | jq -r '.client_id')" >> $GITHUB_ENV
           echo "PORT_CLIENT_SECRET=$(echo $PORT_CREDS | jq -r '.client_secret')" >> $GITHUB_ENV
           
