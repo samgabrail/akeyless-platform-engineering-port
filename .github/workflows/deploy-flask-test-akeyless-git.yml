@@ -41,6 +41,7 @@ jobs:
           # Get secrets using the JWT token
           echo "ARGOCD_SERVER=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/argocd/server')" >> $GITHUB_ENV
           echo "ARGOCD_SERVER=$ARGOCD_SERVER"
+          echo $GITHUB_ENV
           ARGOCD_CREDS=$(akeyless get-secret-value --name '/demos/argocd/user_creds')
           echo "ARGOCD_USER=$(echo $ARGOCD_CREDS | jq -r '.username')" >> $GITHUB_ENV
           echo "ARGOCD_PASS=$(echo $ARGOCD_CREDS | jq -r '.password')" >> $GITHUB_ENV
@@ -50,3 +51,4 @@ jobs:
           echo "PORT_CLIENT_SECRET=$(echo $PORT_CREDS | jq -r '.client_secret')" >> $GITHUB_ENV
           
           echo "PERSONAL_ACCESS_TOKEN=$(akeyless get-secret-value --name '/demos/github/pat')" >> $GITHUB_ENV
+
