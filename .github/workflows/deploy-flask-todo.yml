@@ -234,6 +234,8 @@ jobs:
       - name: Create Akeyless Dynamic Secret
         continue-on-error: true
         run: |
+          # Wait a bit for Target to be created
+          sleep 20
           akeyless dynamic-secret create mysql \
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic" \
             --token $AKEYLESS_TOKEN \
