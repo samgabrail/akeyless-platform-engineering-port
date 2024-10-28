@@ -1,0 +1,107 @@
+{
+  "identifier": "deploy_python_flask_app",
+  "title": "Deploy a Python Flask App",
+  "icon": "AppRunner",
+  "description": "Deploy a Sample Python with Flask app that uses Akeyless and ArgoCD",
+  "trigger": {
+    "type": "self-service",
+    "operation": "CREATE",
+    "userInputs": {
+      "properties": {
+        "app_name": {
+          "icon": "Python",
+          "type": "string",
+          "title": "App Name",
+          "default": "flask-todo"
+        },
+        "namespace": {
+          "icon": "Kubernetes",
+          "type": "string",
+          "title": "Kubernetes Namespace",
+          "default": "flask-todo"
+        },
+        "db_name": {
+          "icon": "Database",
+          "type": "string",
+          "title": "Database Name",
+          "default": "todos"
+        },
+        "akeyless_mysql_secret_name": {
+          "icon": "Lock",
+          "type": "string",
+          "title": "Akeyless MySQL Secret Name",
+          "default": "/demos/mysql_root_password"
+        },
+        "repo_name": {
+          "icon": "Github",
+          "type": "string",
+          "title": "New Repository Name",
+          "default": "flask-todo-app"
+        }
+      },
+      "required": [
+        "app_name",
+        "namespace",
+        "db_name",
+        "akeyless_mysql_secret_name",
+        "repo_name"
+      ],
+      "order": [
+        "app_name",
+        "repo_name",
+        "namespace",
+        "db_name",
+        "akeyless_mysql_secret_name"
+      ]
+    },
+    "blueprintIdentifier": "service"
+  },
+  "invocationMethod": {
+    "type": "GITHUB",
+    "org": "samgabrail",
+    "repo": "akeyless-platform-engineering-port",
+    "workflow": "deploy-flask-todo.yml",
+    "workflowInputs": {
+      "app_name": "{{.inputs.app_name}}",
+      "namespace": "{{.inputs.namespace}}",
+      "db_name": "{{.inputs.db_name}}",
+      "akeyless_mysql_secret_name": "{{.inputs.akeyless_mysql_secret_name}}",
+      "repo_name": "{{.inputs.repo_name}}",
+      "port_payload": {
+        "resourceType": "run",
+        "status": "TRIGGERED",
+        "trigger": "{{ .trigger | {by, origin, at} }}",
+        "context": {
+          "entity": "{{.entity.identifier}}",
+          "blueprint": "{{.action.blueprint}}",
+          "runId": "{{.run.id}}"
+        },
+        "payload": {
+          "entity": "{{ (if .entity == {} then null else .entity end) }}",
+          "action": {
+            "invocationMethod": {
+              "type": "GITHUB",
+              "org": "samgabrail",
+              "repo": "akeyless-platform-engineering-port",
+              "workflow": "deploy-flask-todo.yml",
+              "omitUserInputs": false,
+              "omitPayload": false,
+              "reportWorkflowStatus": true
+            },
+            "trigger": "{{.trigger.operation}}"
+          },
+          "properties": {
+            "app_name": "{{.inputs.app_name}}",
+            "namespace": "{{.inputs.namespace}}",
+            "db_name": "{{.inputs.db_name}}",
+            "akeyless_mysql_secret_name": "{{.inputs.akeyless_mysql_secret_name}}",
+            "repo_name": "{{.inputs.repo_name}}"
+          }
+        }
+      }
+    },
+    "reportWorkflowStatus": true
+  },
+  "requiredApproval": false,
+  "publish": true
+}
