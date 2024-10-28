@@ -23,23 +23,45 @@ on:
         required: true
         type: string
         default: "flask-todo-app"
+      port_payload:
+        required: true
+        type: string
+        default: "{}"
 
 env:
-  ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
   AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
   AKEYLESS_ACCESS_SECRET: ${{ secrets.AKEYLESS_ACCESS_SECRET }}
-  PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
   DYNAMIC_SECRET_TTL: "15"
 
 jobs:
   deploy-flask-todo:
     runs-on: sam-desktop
-    permissions:  # Add this section
+    permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Configure Akeyless CLI and Get Secrets
+        run: |
+          # Configure Akeyless
+          akeyless configure --access-id "$AKEYLESS_ACCESS_ID" --access-key "$AKEYLESS_ACCESS_SECRET"
+          
+          # Get ArgoCD server URL
+          echo "ARGOCD_SERVER=$(akeyless get-secret-value --name '/demos/argocd/server')" >> $GITHUB_ENV
+          # Get ArgoCD credentials and parse JSON
+          ARGOCD_CREDS=$(akeyless get-secret-value --name '/demos/argocd/user_creds')
+          echo "ARGOCD_USER=$(echo $ARGOCD_CREDS | jq -r '.username')" >> $GITHUB_ENV
+          echo "ARGOCD_PASS=$(echo $ARGOCD_CREDS | jq -r '.password')" >> $GITHUB_ENV
+          
+          # Get Port credentials and parse JSON
+          PORT_CREDS=$(akeyless get-secret-value --name '/demos/port/creds')
+          echo "PORT_CLIENT_ID=$(echo $PORT_CREDS | jq -r '.client_id')" >> $GITHUB_ENV
+          echo "PORT_CLIENT_SECRET=$(echo $PORT_CREDS | jq -r '.client_secret')" >> $GITHUB_ENV
+          
+          # Get GitHub Personal Access Token
+          echo "PERSONAL_ACCESS_TOKEN=$(akeyless get-secret-value --name '/demos/github/pat')" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -68,11 +90,6 @@ jobs:
               name: '${{ github.event.inputs.repo_name }}',
               private: true
             });
-
-
-      - name: Configure Akeyless CLI
-        run: |
-          akeyless configure --access-id "$AKEYLESS_ACCESS_ID" --access-key "$AKEYLESS_ACCESS_SECRET"
 
       - name: Retrieve MySQL root password and create Kubernetes Secret
         run: |
@@ -144,10 +161,10 @@ jobs:
             --dry-run=client -o yaml | kubectl apply -f -
       
       - name: Login to Argo CD
-        run: argocd login ${{ secrets.ARGOCD_SERVER }} --username ${{ secrets.ARGOCD_USER }} --password ${{ secrets.ARGOCD_PASS }} --grpc-web --insecure
+        run: argocd login ${{ env.ARGOCD_SERVER }} --username ${{ env.ARGOCD_USER }} --password ${{ env.ARGOCD_PASS }} --grpc-web --insecure
     
       - name: Register Repository in Argo CD
-        run: argocd repo add https://github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git --username ${{ github.repository_owner }} --password ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: argocd repo add https://github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git --username ${{ github.repository_owner }} --password ${{ env.PERSONAL_ACCESS_TOKEN }}
 
       - name: Create ArgoCD Application
         run: |
@@ -201,25 +218,26 @@ jobs:
         run: |
           argocd app sync ${{ github.event.inputs.app_name }}
 
-      # - name: Update Port
-      #   uses: port-labs/port-github-action@v1
-      #   with:
-      #     identifier: ${{ github.event.inputs.app_name }}
-      #     title: ${{ github.event.inputs.app_name }}
-      #     blueprint: service
-      #     properties: |
-      #       {
-      #         "name": "${{ github.event.inputs.app_name }}",
-      #         "namespace": "${{ github.event.inputs.namespace }}",
-      #         "database": "${{ github.event.inputs.db_name }}",
-      #         "akeylessMysqlSecret": "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic",
-      #         "repository": "${{ github.event.inputs.repo_name }}"
-      #       }
-      #     relations: {}
-      #     clientId: ${{ secrets.PORT_CLIENT_ID }}
-      #     clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
-      #     baseUrl: https://api.getport.io
-      #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
+      - name: Update Port
+        uses: port-labs/port-github-action@v1
+        with:
+          identifier: ${{ github.event.inputs.app_name }}
+          title: ${{ github.event.inputs.app_name }}
+          blueprint: service
+          properties: |
+            {
+              "name": "${{ github.event.inputs.app_name }}",
+              "namespace": "${{ github.event.inputs.namespace }}",
+              "database": "${{ github.event.inputs.db_name }}",
+              "akeylessMysqlSecret": "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic",
+              "repository": "${{ github.event.inputs.repo_name }}"
+            }
+          relations: {}
+          clientId: ${{ env.PORT_CLIENT_ID }}
+          clientSecret: ${{ env.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
+
 
 
 
