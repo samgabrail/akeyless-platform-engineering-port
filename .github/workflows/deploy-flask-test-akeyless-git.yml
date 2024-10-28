@@ -39,7 +39,7 @@ jobs:
           export AKEYLESS_TOKEN=$(akeyless auth --access-id ${{ secrets.AKEYLESS_ACCESS_ID }} --access-type jwt --jwt "$TOKEN")
           echo "AKEYLESS_TOKEN=$AKEYLESS_TOKEN"
           # Get secrets using the JWT token
-          echo "ARGOCD_SERVER=$(akeyless get-secret-value --name '/demos/argocd/server')" >> $GITHUB_ENV
+          echo "ARGOCD_SERVER=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/argocd/server')" >> $GITHUB_ENV
           echo "ARGOCD_SERVER=$ARGOCD_SERVER"
           ARGOCD_CREDS=$(akeyless get-secret-value --name '/demos/argocd/user_creds')
           echo "ARGOCD_USER=$(echo $ARGOCD_CREDS | jq -r '.username')" >> $GITHUB_ENV
