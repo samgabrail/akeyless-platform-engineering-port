@@ -1,0 +1,49 @@
+name: Test Akeyless Git Authentication
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        required: true
+        type: string
+        default: "flask-todo"
+
+env:
+  DYNAMIC_SECRET_TTL: "15"
+
+jobs:
+  test-akeyless-git-auth:
+    runs-on: sam-desktop
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure Akeyless CLI and Get Secrets
+        run: |
+          # Get GitHub Actions OIDC token
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN=${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}" >> $GITHUB_ENV
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL=${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}" >> $GITHUB_ENV
+          
+          # Get JWT token
+          TOKEN=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
+          echo "TOKEN=$TOKEN"
+          
+          # Authenticate with Akeyless using JWT
+          export AKEYLESS_TOKEN=$(akeyless auth --access-id "/GitHubAuth" --access-type jwt --jwt "$TOKEN")
+          echo "AKEYLESS_TOKEN=$AKEYLESS_TOKEN"
+          # Get secrets using the JWT token
+          echo "ARGOCD_SERVER=$(akeyless get-secret-value --name '/demos/argocd/server')" >> $GITHUB_ENV
+          
+          ARGOCD_CREDS=$(akeyless get-secret-value --name '/demos/argocd/user_creds')
+          echo "ARGOCD_USER=$(echo $ARGOCD_CREDS | jq -r '.username')" >> $GITHUB_ENV
+          echo "ARGOCD_PASS=$(echo $ARGOCD_CREDS | jq -r '.password')" >> $GITHUB_ENV
+          
+          PORT_CREDS=$(akeyless get-secret-value --name '/demos/port/creds')
+          echo "PORT_CLIENT_ID=$(echo $PORT_CREDS | jq -r '.client_id')" >> $GITHUB_ENV
+          echo "PORT_CLIENT_SECRET=$(echo $PORT_CREDS | jq -r '.client_secret')" >> $GITHUB_ENV
+          
+          echo "PERSONAL_ACCESS_TOKEN=$(akeyless get-secret-value --name '/demos/github/pat')" >> $GITHUB_ENV
