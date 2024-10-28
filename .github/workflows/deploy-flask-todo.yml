@@ -90,7 +90,6 @@ jobs:
 
       - name: Create new repository
         uses: actions/github-script@v6
-        continue-on-error: true
         with:
           github-token: ${{ env.PERSONAL_ACCESS_TOKEN }}
           script: |
