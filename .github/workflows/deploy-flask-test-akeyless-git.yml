@@ -35,7 +35,7 @@ jobs:
           # Authenticate with Akeyless using JWT
           echo "AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE=./gateway-tls-cert.pem" >> $GITHUB_ENV
           echo "AKEYLESS_GATEWAY_URL=https://192.168.1.82:8000" >> $GITHUB_ENV
-          export AKEYLESS_TOKEN=$(akeyless auth --access-id ${{ secrets.AKEYLESS_ACCESS_ID }} --access-type jwt --jwt "$TOKEN" --json=true)
+          export AKEYLESS_TOKEN=$(akeyless auth --access-id ${{ secrets.AKEYLESS_ACCESS_ID }} --access-type jwt --jwt "$TOKEN" --json | jq -r '.token')
           echo "AKEYLESS_TOKEN=$AKEYLESS_TOKEN"
 
           # Get secrets using the JWT token
@@ -50,4 +50,3 @@ jobs:
           echo "PORT_CLIENT_SECRET=$(echo $PORT_CREDS | jq -r '.client_secret')" >> $GITHUB_ENV
           
           echo "PERSONAL_ACCESS_TOKEN=$(akeyless get-secret-value --name '/demos/github/pat')" >> $GITHUB_ENV
-
