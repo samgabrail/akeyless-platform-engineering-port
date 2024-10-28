@@ -172,7 +172,27 @@ jobs:
             --dry-run=client -o yaml | kubectl apply -f -
       
       - name: Login to Argo CD
-        run: argocd login ${{ env.ARGOCD_SERVER }} --username ${{ env.ARGOCD_USER }} --password ${{ env.ARGOCD_PASS }} --grpc-web --insecure
+        run: |
+          max_retries=3
+          retry_count=0
+          wait_time=10
+
+          while [ $retry_count -lt $max_retries ]; do
+            if argocd login ${{ env.ARGOCD_SERVER }} --username ${{ env.ARGOCD_USER }} --password ${{ env.ARGOCD_PASS }} --grpc-web --insecure; then
+              echo "Successfully logged into ArgoCD"
+              exit 0
+            else
+              retry_count=$((retry_count+1))
+              if [ $retry_count -lt $max_retries ]; then
+                echo "Failed to login to ArgoCD. Attempt $retry_count of $max_retries. Waiting ${wait_time} seconds before retry..."
+                sleep $wait_time
+                wait_time=$((wait_time * 2))
+              else
+                echo "Failed to login to ArgoCD after $max_retries attempts"
+                exit 1
+              fi
+            fi
+          done
     
       - name: Register Repository in Argo CD
         run: argocd repo add https://github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git --username ${{ github.repository_owner }} --password ${{ env.PERSONAL_ACCESS_TOKEN }}
