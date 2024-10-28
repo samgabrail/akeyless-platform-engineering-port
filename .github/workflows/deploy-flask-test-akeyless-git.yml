@@ -33,7 +33,10 @@ jobs:
           echo "TOKEN=$TOKEN"
           
           # Authenticate with Akeyless using JWT
-          export AKEYLESS_TOKEN=$(akeyless auth --access-id "/GitHubAuth" --access-type jwt --jwt "$TOKEN")
+          pwd
+          echo "AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE=./gateway-tls-cert.pem" >> $GITHUB_ENV
+          echo "AKEYLESS_GATEWAY_URL=https://192.168.1.82:8000" >> $GITHUB_ENV
+          export AKEYLESS_TOKEN=$(akeyless auth --access-id ${{ secrets.AKEYLESS_ACCESS_ID }} --access-type jwt --jwt "$TOKEN")
           echo "AKEYLESS_TOKEN=$AKEYLESS_TOKEN"
           # Get secrets using the JWT token
           echo "ARGOCD_SERVER=$(akeyless get-secret-value --name '/demos/argocd/server')" >> $GITHUB_ENV
