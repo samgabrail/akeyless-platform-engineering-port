@@ -264,10 +264,16 @@ jobs:
           operation: PATCH_RUN
           baseUrl: https://api.getport.io
           runId: ${{ fromJson(inputs.port_payload).context.runId }}
-          link: '["https://github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}"]'
+          link: https://github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}
           status: "SUCCESS"
+          summary: "Created Flask Todo App with Akeyless integration"
           logMessage: |
-              Created Flask Todo App with Akeyless integration. View the service repo in Port: https://app.getport.io/serviceEntity?identifier=${{ github.event.inputs.repo_name }}
+              Created Flask Todo App with Akeyless integration. 
+              Here is your app repo: https://github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}
+              View the service repo in Port: https://app.getport.io/serviceEntity?identifier=${{ github.event.inputs.repo_name }}
+              Check out your app running in the Port ArgoCD dashboard: https://app.getport.io/argo_cd_dashboard
+
+
 
 
 
