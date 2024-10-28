@@ -51,13 +51,11 @@ jobs:
           
           # Get JWT token
           TOKEN=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
-          echo "TOKEN=$TOKEN"
           
           # Authenticate with Akeyless using JWT
           echo "AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE=./gateway-tls-cert.pem" >> $GITHUB_ENV
           echo "AKEYLESS_GATEWAY_URL=https://192.168.1.82:8000" >> $GITHUB_ENV
           export AKEYLESS_TOKEN=$(akeyless auth --access-id ${{ secrets.AKEYLESS_ACCESS_ID }} --access-type jwt --jwt "$TOKEN" --json | jq -r '.token')
-          echo "AKEYLESS_TOKEN=$AKEYLESS_TOKEN"
 
           ARGOCD_SERVER=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/argocd/server')
           echo "ARGOCD_SERVER=$ARGOCD_SERVER" >> "$GITHUB_ENV"
@@ -208,7 +206,10 @@ jobs:
           if [ $? -ne 0 ]; then
             echo "Note: Target creation failed because it already exists, but continuing with the workflow."
           fi
-
+        env:
+          AKEYLESS_GATEWAY_URL: 'https://192.168.1.82:8080'
+          AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE: './gateway_cert.pem'
+            
       - name: Create Akeyless Dynamic Secret
         continue-on-error: true
         run: |
