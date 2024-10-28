@@ -45,23 +45,32 @@ jobs:
 
       - name: Configure Akeyless CLI and Get Secrets
         run: |
-          # Configure Akeyless
-          akeyless configure --access-id "$AKEYLESS_ACCESS_ID" --access-key "$AKEYLESS_ACCESS_SECRET"
+          # Get GitHub Actions OIDC token
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN=${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}" >> $GITHUB_ENV
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL=${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}" >> $GITHUB_ENV
           
-          # Get ArgoCD server URL
-          echo "ARGOCD_SERVER=$(akeyless get-secret-value --name '/demos/argocd/server')" >> $GITHUB_ENV
-          # Get ArgoCD credentials and parse JSON
-          ARGOCD_CREDS=$(akeyless get-secret-value --name '/demos/argocd/user_creds')
+          # Get JWT token
+          TOKEN=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
+          echo "TOKEN=$TOKEN"
+          
+          # Authenticate with Akeyless using JWT
+          echo "AKEYLESS_TRUSTED_TLS_CERTIFICATE_FILE=./gateway-tls-cert.pem" >> $GITHUB_ENV
+          echo "AKEYLESS_GATEWAY_URL=https://192.168.1.82:8000" >> $GITHUB_ENV
+          export AKEYLESS_TOKEN=$(akeyless auth --access-id ${{ secrets.AKEYLESS_ACCESS_ID }} --access-type jwt --jwt "$TOKEN" --json | jq -r '.token')
+          echo "AKEYLESS_TOKEN=$AKEYLESS_TOKEN"
+
+          ARGOCD_SERVER=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/argocd/server')
+          echo "ARGOCD_SERVER=$ARGOCD_SERVER" >> "$GITHUB_ENV"
+          
+          ARGOCD_CREDS=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/argocd/user_creds')
           echo "ARGOCD_USER=$(echo $ARGOCD_CREDS | jq -r '.username')" >> $GITHUB_ENV
           echo "ARGOCD_PASS=$(echo $ARGOCD_CREDS | jq -r '.password')" >> $GITHUB_ENV
           
-          # Get Port credentials and parse JSON
-          PORT_CREDS=$(akeyless get-secret-value --name '/demos/port/creds')
+          PORT_CREDS=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/port/creds')
           echo "PORT_CLIENT_ID=$(echo $PORT_CREDS | jq -r '.client_id')" >> $GITHUB_ENV
           echo "PORT_CLIENT_SECRET=$(echo $PORT_CREDS | jq -r '.client_secret')" >> $GITHUB_ENV
           
-          # Get GitHub Personal Access Token
-          echo "PERSONAL_ACCESS_TOKEN=$(akeyless get-secret-value --name '/demos/github/pat')" >> $GITHUB_ENV
+          echo "PERSONAL_ACCESS_TOKEN=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/github/pat')" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -186,6 +195,7 @@ jobs:
           sleep 20
           akeyless target create db \
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
+            --token $AKEYLESS_TOKEN \
             --db-type mysql \
             --pwd "$MYSQL_ROOT_PASSWORD" \
             --host "mysql-${{ github.event.inputs.app_name }}.${{ github.event.inputs.namespace }}.svc.cluster.local" \
@@ -201,6 +211,7 @@ jobs:
         run: |
           akeyless dynamic-secret create mysql \
             --name "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic" \
+            --token $AKEYLESS_TOKEN \
             --target-name "${{ github.event.inputs.akeyless_mysql_secret_name }}_target" \
             --gateway-url ${{ env.AKEYLESS_GATEWAY_URL }} \
             --user-ttl "${{ env.DYNAMIC_SECRET_TTL }}s" \

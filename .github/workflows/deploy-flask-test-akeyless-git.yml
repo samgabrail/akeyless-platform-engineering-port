@@ -38,27 +38,15 @@ jobs:
           export AKEYLESS_TOKEN=$(akeyless auth --access-id ${{ secrets.AKEYLESS_ACCESS_ID }} --access-type jwt --jwt "$TOKEN" --json | jq -r '.token')
           echo "AKEYLESS_TOKEN=$AKEYLESS_TOKEN"
 
-          # Get secrets using the JWT token and add debug output
           ARGOCD_SERVER=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/argocd/server')
-          echo "Debug - ARGOCD_SERVER value: $ARGOCD_SERVER"
           echo "ARGOCD_SERVER=$ARGOCD_SERVER" >> "$GITHUB_ENV"
           
-          # Verify the environment variable was set
-          echo "Verifying ARGOCD_SERVER environment variable:"
-          echo "ARGOCD_SERVER: $ARGOCD_SERVER"
-          
-          # Rest of the secrets
-          ARGOCD_CREDS=$(akeyless get-secret-value --name '/demos/argocd/user_creds')
+          ARGOCD_CREDS=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/argocd/user_creds')
           echo "ARGOCD_USER=$(echo $ARGOCD_CREDS | jq -r '.username')" >> $GITHUB_ENV
           echo "ARGOCD_PASS=$(echo $ARGOCD_CREDS | jq -r '.password')" >> $GITHUB_ENV
           
-          PORT_CREDS=$(akeyless get-secret-value --name '/demos/port/creds')
+          PORT_CREDS=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/port/creds')
           echo "PORT_CLIENT_ID=$(echo $PORT_CREDS | jq -r '.client_id')" >> $GITHUB_ENV
           echo "PORT_CLIENT_SECRET=$(echo $PORT_CREDS | jq -r '.client_secret')" >> $GITHUB_ENV
           
-          echo "PERSONAL_ACCESS_TOKEN=$(akeyless get-secret-value --name '/demos/github/pat')" >> $GITHUB_ENV
-
-          # Final environment check
-          echo "Final environment check:"
-          grep ARGOCD_SERVER "$GITHUB_ENV" || echo "ARGOCD_SERVER not found in GITHUB_ENV file"
-          printenv | grep ARGOCD_SERVER || echo "ARGOCD_SERVER not found in environment"
+          echo "PERSONAL_ACCESS_TOKEN=$(akeyless get-secret-value --token $AKEYLESS_TOKEN --name '/demos/github/pat')" >> $GITHUB_ENV
