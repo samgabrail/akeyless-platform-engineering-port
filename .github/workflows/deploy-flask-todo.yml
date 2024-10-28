@@ -23,10 +23,10 @@ on:
         required: true
         type: string
         default: "flask-todo-app"
-      port_payload:
-        required: true
-        type: string
-        default: "{}"
+      # port_payload:
+      #   required: true
+      #   type: string
+      #   default: "{}"
 
 env:
   AKEYLESS_ACCESS_ID: ${{ secrets.AKEYLESS_ACCESS_ID }}
@@ -218,25 +218,25 @@ jobs:
         run: |
           argocd app sync ${{ github.event.inputs.app_name }}
 
-      - name: Update Port
-        uses: port-labs/port-github-action@v1
-        with:
-          identifier: ${{ github.event.inputs.app_name }}
-          title: ${{ github.event.inputs.app_name }}
-          blueprint: service
-          properties: |
-            {
-              "name": "${{ github.event.inputs.app_name }}",
-              "namespace": "${{ github.event.inputs.namespace }}",
-              "database": "${{ github.event.inputs.db_name }}",
-              "akeylessMysqlSecret": "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic",
-              "repository": "${{ github.event.inputs.repo_name }}"
-            }
-          relations: {}
-          clientId: ${{ env.PORT_CLIENT_ID }}
-          clientSecret: ${{ env.PORT_CLIENT_SECRET }}
-          baseUrl: https://api.getport.io
-          runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}}
+      # - name: Update Port
+      #   uses: port-labs/port-github-action@v1
+      #   with:
+      #     identifier: ${{ github.event.inputs.app_name }}
+      #     title: ${{ github.event.inputs.app_name }}
+      #     blueprint: service
+      #     properties: |
+      #       {
+      #         "name": "${{ github.event.inputs.app_name }}",
+      #         "namespace": "${{ github.event.inputs.namespace }}",
+      #         "database": "${{ github.event.inputs.db_name }}",
+      #         "akeylessMysqlSecret": "${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic",
+      #         "repository": "${{ github.event.inputs.repo_name }}"
+      #       }
+      #     relations: {}
+      #     clientId: ${{ env.PORT_CLIENT_ID }}
+      #     clientSecret: ${{ env.PORT_CLIENT_SECRET }}
+      #     baseUrl: https://api.getport.io
+      #     runId: ${{fromJson(github.event.inputs.port_payload).context.runId}}
 
 
 
