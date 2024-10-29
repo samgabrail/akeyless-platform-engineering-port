@@ -131,10 +131,27 @@ jobs:
           git config --global user.email "info@tekanaid.com"
           git config --global user.name "TeKanAid Automation"
           
+          # Debug current directory and git status
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          
           # Remove directory if it exists and clone fresh
           rm -rf ${{ github.event.inputs.repo_name }}
+          
+          # Clone the new repository
           git clone https://x-access-token:${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git
           cd ${{ github.event.inputs.repo_name }}
+          
+          # Verify git remote
+          echo "Git remote before:"
+          git remote -v
+          
+          # Explicitly set the correct remote URL
+          git remote set-url origin https://x-access-token:${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git
+          
+          echo "Git remote after:"
+          git remote -v
           
           # Clean existing files (but preserve .git)
           find . -mindepth 1 -not -name '.git' -not -name '.gitignore' -delete
@@ -167,9 +184,12 @@ jobs:
           sed -i 's#{{AKEYLESS_MYSQL_SECRET_NAME}}#${{ github.event.inputs.akeyless_mysql_secret_name }}_dynamic#g' *.yaml
           sed -i 's/{{DYNAMIC_SECRET_TTL}}/${{ env.DYNAMIC_SECRET_TTL }}/g' *.yaml  # Add this line
           
+          # Commit and push
           git add .
           git commit -m "Add Flask Todo app and MySQL manifests with Akeyless integration"
-          git push
+          
+          echo "Pushing to repository: ${{ github.event.inputs.repo_name }}"
+          git push origin main || git push origin master
 
       - name: Create Kubernetes Secret for Gateway Certificate
         run: |
