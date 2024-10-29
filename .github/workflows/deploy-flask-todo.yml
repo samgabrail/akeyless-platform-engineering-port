@@ -130,8 +130,14 @@ jobs:
         run: |
           git config --global user.email "info@tekanaid.com"
           git config --global user.name "TeKanAid Automation"
+          
+          # Remove directory if it exists and clone fresh
+          rm -rf ${{ github.event.inputs.repo_name }}
           git clone https://x-access-token:${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository_owner }}/${{ github.event.inputs.repo_name }}.git
           cd ${{ github.event.inputs.repo_name }}
+          
+          # Clean existing files (but preserve .git)
+          find . -mindepth 1 -not -name '.git' -not -name '.gitignore' -delete
           
           # Copy and modify manifest files and source code
           cp -r ../k8s-manifests/* .
@@ -142,9 +148,10 @@ jobs:
           cp ../Pipfile .
           cp ../Pipfile.lock .
           cp ../run.py .
-          rm ../README.md
+          rm -f ../README.md
           mv ../README-PythonApp.md ../README.md
           cp ../README.md .
+          
           # Create GitHub Actions workflow directory
           mkdir -p .github/workflows
           cp ../flask-todo-app/.github/workflows/build-and-push.yml .github/workflows/
