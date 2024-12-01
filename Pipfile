@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 flask = "==2.2.5"
 werkzeug = "==3.0.4"
-mysql-connector-python = "==8.0.26"
+mysql-connector-python = "==9.1.0"
 requests = "*"
 pytest = "==7.4.3"
 
